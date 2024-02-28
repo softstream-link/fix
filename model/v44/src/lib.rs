@@ -1,0 +1,1 @@
+../../generator/resources/lib.rs

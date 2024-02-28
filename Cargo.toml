@@ -1,0 +1,49 @@
+[workspace]
+members = ["model/v42", "serde", "model/test", "model/generator", "model/core", "model/v44"]
+resolver = "2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[workspace.package]
+version = "0.1.0"
+authors = ["Softstream <softstream.link@gmail.com>"]
+readme = "readme.md"
+license-file = "LICENSE"
+edition = "2021"
+rust-version = "1.77.0"
+# repository = "https://github.com/softstream-link/links" # TODO fix the link
+keywords = ["network"]
+categories = ["network-programming"]
+
+
+[workspace.dependencies]
+serde = { version = "1.0", features = ["derive", "std"] }
+serde_json = { version = "1.0" }
+quick-xml = { version = "0.31.0", features = ["serialize"] }
+quote = { version = "1.0" }
+syn = { version = "2.0" }
+proc-macro2 = { version = "1.0" }
+prettyplease = { version = "0.2" }
+
+bytes = { version = "1.5" }
+itoa = { version = "1.0" }  # fast writes of integers to buffer
+ryu = { version = "1.0" }   # fast writes of floats to buffer
+convert_case = { version = "0.6" }
+base64 = { version = "0.22" }
+
+fix_model_generator = { path = "model/generator" }
+fix_model_test = { path = "model/test" }
+fix_model_core = { path = "model/core" }
+fix_serde = { path = "serde" }
+
+# logging
+log = { version = "0.4" }
+env_logger = { version = "0.11" }
+colored = { version = "2.0" }
+
+# testing
+trybuild = { version = "1.0", features = ["diff"] }
+
+
+# benchmarking
+criterion = { version = "0.5" }

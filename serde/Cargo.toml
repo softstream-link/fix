@@ -1,0 +1,44 @@
+[package]
+name = "fix_serde"
+version.workspace = true
+authors.workspace = true
+readme.workspace = true
+license-file.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bytes = { workspace = true }
+log = { workspace = true }
+serde = { workspace = true }
+itoa = { workspace = true }
+ryu = { workspace = true }
+fix_model_core = { workspace = true }
+
+# enabled when "unittest" feature is enabled
+# env_logger = { workspace = true, optional = true }
+# colored = { workspace = true, optional = true }
+# serde_json = { workspace = true, optional = true }
+
+[dev-dependencies]
+criterion = { workspace = true }
+
+fix_serde = { workspace = true }
+fix_model_test = { workspace = true }
+fix_model_generator = { workspace = true }
+
+env_logger = { workspace = true }
+colored = { workspace = true }
+serde_json = { workspace = true }
+
+
+[features]
+default = []
+# develop = ["unittest"]
+develop = []
+# unittest = ["dep:env_logger", "dep:colored", "dep:serde_json"]
+# utf8_support = []

@@ -1,0 +1,26 @@
+{
+    "rust-analyzer.cargo.features": [
+        "develop"
+    ],
+    "workbench.editor.revealIfOpen": true,
+    "cSpell.words": [
+        "canonicalize",
+        "fixerr",
+        "fixstr",
+        "fixstring",
+        "FIXT",
+        "fixtag",
+        "fnumber",
+        "inumber",
+        "NUMINGROUP",
+        "quickfix",
+        "repr",
+        "SEQNUM",
+        "servicepack",
+        "trybuild",
+        "unsplit",
+        "unumber"
+    ],
+
+    "rust-analyzer.showUnlinkedFileNotification": false,
+}

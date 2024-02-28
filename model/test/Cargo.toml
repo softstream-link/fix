@@ -1,0 +1,25 @@
+[package]
+name = "fix_model_test"
+version.workspace = true
+authors.workspace = true
+readme.workspace = true
+license-file.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+bytes = { workspace = true }
+# testing
+trybuild = { workspace = true }
+
+# logging
+log = { workspace = true }
+env_logger = { workspace = true }
+colored = { workspace = true }
+

@@ -1,0 +1,30 @@
+[package]
+name = "fix_model_generator"
+version.workspace = true
+authors.workspace = true
+readme.workspace = true
+license-file.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = { workspace = true }
+quick-xml = { workspace = true }
+
+# logging
+log = { workspace = true }
+env_logger = { workspace = true }
+colored = { workspace = true }
+
+# utils
+lazy_static = { workspace = true }
+
+
+[features]
+default = []
+full = ["unittest"]
+unittest = []

@@ -1,0 +1,36 @@
+[workspace]
+members = ["model/generator", "model/test"]
+resolver = "2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[workspace.package]
+version = "0.1.0"
+authors = ["Softstream <softstream.link@gmail.com>"]
+readme = "readme.md"
+license-file = "LICENSE"
+edition = "2021"
+rust-version = "1.75"
+# repository = "https://github.com/softstream-link/links" # TODO fix the link
+keywords = ["network"]
+categories = ["network-programming"]
+
+
+[workspace.dependencies]
+serde = { version = "1.0", features = ["derive"] }
+quick-xml = { version = "0.31.0", features = ["serialize"] }
+
+
+fix_model_test = { path = "model/test" }
+fix_model_generator = { path = "model/generator" }
+
+# logging
+log = { version = "0.4" }
+env_logger = { version = "0.11" }
+colored = { version = "2.0" }
+
+# testing
+trybuild = { version = "1.0", features = ["diff"] }
+
+# utils
+lazy_static = { version = "1.4" }

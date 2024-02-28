@@ -1,0 +1,12 @@
+{
+    "rust-analyzer.cargo.features": [
+        "full"
+    ],
+    "workbench.editor.revealIfOpen": true,
+    "cSpell.words": [
+        "canonicalize",
+        "quickfix",
+        "servicepack",
+        "trybuild"
+    ],
+}

@@ -1,15 +1,9 @@
-
 pub use crate::schema::quickfix::QuickFixRoot;
-pub use crate::schema::rust::{RustFixModel, IntoRust, save, save_vec};
+pub use crate::schema::rust::{save, save_vec, IntoRust, RustFixModel};
 
-pub use crate::{fix_string, fix_int, fix_char};
+pub use crate::{
+    fix_bool, fix_char, fix_country, fix_int, fix_length, fix_number_in_group, fix_seq_num,
+    fix_string,
+};
 
 
-#[cfg(feature = "unittest")]
-pub use crate::create_target_dir;
-
-#[cfg(feature = "unittest")]
-pub use crate::resource_to_string;
-
-#[cfg(feature = "unittest")]
-pub use crate::resource;

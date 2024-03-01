@@ -1,0 +1,19 @@
+[package]
+name = "fix_model_core"
+version.workspace = true
+authors.workspace = true
+readme.workspace = true
+license-file.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bytes = { workspace = true }
+
+[dev-dependencies]
+fix_model_test = { workspace = true }
+log = { workspace = true }

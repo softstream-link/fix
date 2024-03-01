@@ -1,5 +1,5 @@
 [workspace]
-members = ["model/generator", "model/test"]
+members = ["model/core", "model/generator", "model/test"]
 resolver = "2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -20,9 +20,11 @@ categories = ["network-programming"]
 serde = { version = "1.0", features = ["derive"] }
 quick-xml = { version = "0.31.0", features = ["serialize"] }
 
+bytes = { version = "1.5" }
 
 fix_model_test = { path = "model/test" }
 fix_model_generator = { path = "model/generator" }
+fix_model_core = { path = "model/core" }
 
 # logging
 log = { version = "0.4" }

@@ -5,7 +5,10 @@
     "workbench.editor.revealIfOpen": true,
     "cSpell.words": [
         "canonicalize",
+        "FIXT",
+        "NUMINGROUP",
         "quickfix",
+        "SEQNUM",
         "servicepack",
         "trybuild"
     ],

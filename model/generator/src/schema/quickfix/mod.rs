@@ -50,19 +50,3 @@ impl<S: AsRef<str>> From<S> for QuickFixRoot {
         quick_xml::de::from_str(xml.as_ref()).unwrap()
     }
 }
-
-#[cfg(feature = "unittest")]
-#[cfg(test)]
-mod tests {
-    use std::io::Result;
-
-    use super::*;
-    use crate::prelude::*;
-    #[test]
-    fn test_deserialize_fix() -> Result<()> {
-        let xml = resource_to_string!("quickfix/FIX-5.0.xml")?;
-        let fix = QuickFixRoot::from(xml);
-        println!("fix: {:#?}", fix);
-        Ok(())
-    }
-}

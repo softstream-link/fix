@@ -35,7 +35,7 @@ macro_rules! resource {
 #[macro_export]
 macro_rules! resource_to_string {
     ($fname:expr) => {{
-        let path_buf = crate::resource!($fname);
+        let path_buf = $crate::resource!($fname);
         std::fs::read_to_string(path_buf)
     }};
 }

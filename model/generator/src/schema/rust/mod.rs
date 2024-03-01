@@ -16,6 +16,10 @@ enum FieldType {
     INT,
     CHAR,
     COUNTRY,
+    BOOL,
+    SEQNUM,
+    LENGTH,
+    NUMINGROUP,
 }
 
 pub trait IntoRust {
@@ -35,6 +39,10 @@ impl From<&QuickFixField> for RustFixField {
             "INT" => FieldType::INT,
             "CHAR" => FieldType::CHAR,
             "COUNTRY" => FieldType::COUNTRY,
+            "BOOLEAN" => FieldType::BOOL,
+            "SEQNUM" => FieldType::SEQNUM,
+            "LENGTH" => FieldType::LENGTH,
+            "NUMINGROUP" => FieldType::NUMINGROUP,
             quick_fix_field_type => {
                 let mut guard = (*QUICK_FIX_TYPE_WARNINGS)
                     .lock()
@@ -83,6 +91,26 @@ impl IntoRust for RustFixField {
             ),
             FieldType::COUNTRY => format!(
                 "fix_model_generator::fix_country!({name}, {id});\n",
+                name = self.name,
+                id = self.id,
+            ),
+            FieldType::BOOL => format!(
+                "fix_model_generator::fix_bool!({name}, {id});\n",
+                name = self.name,
+                id = self.id,
+            ),
+            FieldType::SEQNUM => format!(
+                "fix_model_generator::fix_seq_num!({name}, {id});\n",
+                name = self.name,
+                id = self.id,
+            ),
+            FieldType::LENGTH => format!(
+                "fix_model_generator::fix_length!({name}, {id});\n",
+                name = self.name,
+                id = self.id,
+            ),
+            FieldType::NUMINGROUP => format!(
+                "fix_model_generator::fix_number_in_group!({name}, {id});\n",
                 name = self.name,
                 id = self.id,
             ),

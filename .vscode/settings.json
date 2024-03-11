@@ -6,10 +6,21 @@
     "cSpell.words": [
         "canonicalize",
         "FIXT",
+        "fnumber",
+        "inumber",
         "NUMINGROUP",
         "quickfix",
         "SEQNUM",
         "servicepack",
-        "trybuild"
+        "trybuild",
+        "unsplit",
+        "unumber"
     ],
+    "rust-analyzer.linkedProjects": [
+        "./model/core/Cargo.toml",
+        "./model/core/Cargo.toml",
+        "./model/core/Cargo.toml",
+        "./model/core/Cargo.toml"
+    ],
+    "rust-analyzer.showUnlinkedFileNotification": false,
 }

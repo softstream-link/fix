@@ -12,8 +12,10 @@ categories.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-fix_model_generator = { workspace = true, features = ["unittest"] }
+fix_model_generator = { workspace = true }
+fix_model_core = { workspace = true, features = ["unittest"] }
 serde = { workspace = true }
+bytes = { workspace = true }
 
 # testing
 trybuild = { workspace = true }

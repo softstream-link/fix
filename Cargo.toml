@@ -36,3 +36,6 @@ trybuild = { version = "1.0", features = ["diff"] }
 
 # utils
 lazy_static = { version = "1.4" }
+
+# benchmarking
+criterion = { version = "0.5" }

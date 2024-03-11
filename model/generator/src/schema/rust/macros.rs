@@ -4,11 +4,29 @@ macro_rules! fix_string {
         #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Default)]
         pub struct $NAME(String);
         impl $NAME {
-            pub const ID: u32 = $ID;
+            pub const TAG: u32 = $ID;
             pub const NAME: &'static str = stringify!($NAME);
             #[inline(always)]
             pub fn new(value: String) -> Self {
                 Self(value)
+            }
+        }
+        impl fix_model_core::prelude::Field for $NAME {
+            #[inline(always)]
+            fn tag(&self) -> fix_model_core::prelude::Tag {
+                $NAME::TAG.into()
+            }
+            #[inline(always)]
+            fn value(&self) -> &impl fix_model_core::prelude::Value {
+                &self.0
+            }
+        }
+        impl fix_model_core::prelude::Serialize for $NAME {
+            #[inline(always)]
+            fn serialize(&self, ser: &mut impl fix_model_core::prelude::Serializer) {
+                use fix_model_core::prelude::Field;
+                self.tag().serialize(ser);
+                self.value().serialize(ser);
             }
         }
         $crate::_debug!($NAME);
@@ -22,7 +40,7 @@ macro_rules! fix_int {
         #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Default)]
         pub struct $NAME(i32);
         impl $NAME {
-            pub const ID: u32 = $ID;
+            pub const TAG: u32 = $ID;
             pub const NAME: &'static str = stringify!($NAME);
             #[inline(always)]
             pub fn new(value: i32) -> Self {
@@ -40,7 +58,7 @@ macro_rules! fix_char {
         #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Default)]
         pub struct $NAME(char);
         impl $NAME {
-            pub const ID: u32 = $ID;
+            pub const TAG: u32 = $ID;
             pub const NAME: &'static str = stringify!($NAME);
             #[inline(always)]
             pub fn new(value: char) -> Self {
@@ -58,7 +76,7 @@ macro_rules! fix_country {
         #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Default)]
         pub struct $NAME(String);
         impl $NAME {
-            pub const ID: u32 = $ID;
+            pub const TAG: u32 = $ID;
             pub const NAME: &'static str = stringify!($NAME);
             #[inline(always)]
             pub fn new(value: String) -> Self {
@@ -77,7 +95,7 @@ macro_rules! fix_bool {
         #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Default)]
         pub struct $NAME(char);
         impl $NAME {
-            pub const ID: u32 = $ID;
+            pub const TAG: u32 = $ID;
             pub const NAME: &'static str = stringify!($NAME);
             #[inline(always)]
             pub fn new(value: bool) -> Self {
@@ -99,7 +117,7 @@ macro_rules! fix_seq_num {
         #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Default)]
         pub struct $NAME(u64);
         impl $NAME {
-            pub const ID: u32 = $ID;
+            pub const TAG: u32 = $ID;
             pub const NAME: &'static str = stringify!($NAME);
             #[inline(always)]
             pub fn new(value: u64) -> Self {
@@ -124,7 +142,7 @@ macro_rules! fix_number_in_group {
         #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Default)]
         pub struct $NAME(u16);
         impl $NAME {
-            pub const ID: u32 = $ID;
+            pub const TAG: u32 = $ID;
             pub const NAME: &'static str = stringify!($NAME);
             #[inline(always)]
             pub fn new(value: u16) -> Self {
@@ -142,14 +160,9 @@ macro_rules! _debug {
     ($NAME:ident) => {
         impl std::fmt::Debug for $NAME {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                f.debug_tuple(
-                    std::any::type_name::<Self>()
-                        .split("::")
-                        .last()
-                        .ok_or(std::fmt::Error)?,
-                )
-                .field(&self.0)
-                .finish()
+                f.debug_tuple(std::any::type_name::<Self>().split("::").last().ok_or(std::fmt::Error)?)
+                    .field(&self.0)
+                    .finish()
             }
         }
     };
@@ -164,7 +177,7 @@ macro_rules! _display {
                 } else if f.sign_minus() {
                     write!(f, "{}", self.0)
                 } else {
-                    write!(f, "{}={}", $NAME::ID, self.0)
+                    write!(f, "{}={}", $NAME::TAG, self.0)
                 }
             }
         }

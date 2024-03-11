@@ -24,7 +24,4 @@ colored = { workspace = true }
 lazy_static = { workspace = true }
 
 
-[features]
-default = []
-full = ["unittest"]
-unittest = []
+

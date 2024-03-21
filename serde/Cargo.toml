@@ -1,5 +1,5 @@
 [package]
-name = "fix_model_core"
+name = "fix_serde"
 version.workspace = true
 authors.workspace = true
 readme.workspace = true
@@ -14,35 +14,22 @@ categories.workspace = true
 [dependencies]
 bytes = { workspace = true }
 log = { workspace = true }
-env_logger = { workspace = true, optional = true }
-colored = { workspace = true, optional = true }
 serde = { workspace = true }
 
+# enabled when "unittest" feature is enabled
+env_logger = { workspace = true, optional = true }
+colored = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
+
 [dev-dependencies]
+
 fix_model_generator = { workspace = true }
 fix_model_test = { workspace = true }
 criterion = { workspace = true }
 
+
 [features]
 default = []
-full = ["unittest"]
-unittest = ["dep:env_logger", "dep:colored"]
+develop = ["unittest"]
+unittest = ["dep:env_logger", "dep:colored", "dep:serde_json"]
 assume_u8_is_ascii = []
-
-
-[[bench]]
-name = "01_number_2_str"
-harness = false
-
-
-[[bench]]
-name = "02_message_index"
-harness = false
-required-features = ["unittest"]
-
-[[bench]]
-name = "02_message_str"
-harness = false
-required-features = ["unittest"]
-
-

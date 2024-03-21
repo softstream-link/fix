@@ -1,7 +1,8 @@
 pub mod heap;
 pub mod types;
+pub mod ascii;
 
-use crate::parser::ser::types::{Field, Tag, Value};
+use crate::prelude::{Field, Tag, Value};
 
 pub trait Serialize{
     fn serialize(&self, ser: &mut impl Serializer);

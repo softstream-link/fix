@@ -1,5 +1,5 @@
 [workspace]
-members = ["model/core", "model/generator", "model/test"]
+members = ["model/core", "model/generator", "model/test", "serde"]
 resolver = "2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -17,7 +17,8 @@ categories = ["network-programming"]
 
 
 [workspace.dependencies]
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0", features = ["derive", "std"] }
+serde_json = { version = "1.0" }
 quick-xml = { version = "0.31.0", features = ["serialize"] }
 
 bytes = { version = "1.5" }
@@ -39,3 +40,5 @@ lazy_static = { version = "1.4" }
 
 # benchmarking
 criterion = { version = "0.5" }
+
+

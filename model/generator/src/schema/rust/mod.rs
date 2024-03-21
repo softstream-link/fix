@@ -1,4 +1,5 @@
-pub mod macros;
+pub mod fields;
+pub mod message;
 
 use std::{collections::HashSet, io::Write, path::Path, sync::Mutex};
 

@@ -1,27 +1,10 @@
 use std::fmt::{Debug, Display};
 
-use crate::prelude::{Serialize, Serializer};
+use crate::prelude::{Serialize, Serializer, Tag};
 
-pub trait Value: Serialize {}
+pub trait Value: Serialize + Display + Debug + Clone + PartialEq {}
 
-impl<const N: usize> Serialize for &[u8; N] {
-    fn serialize(&self, ser: &mut impl Serializer) {
-        debug_assert!(self.is_ascii(), "Not Ascii '{:x?}'", self);
-        ser.serialize_slice(*self);
-        ser.serialize_soh();
-    }
-}
-impl<const N: usize> Value for &[u8; N] {}
-
-impl Serialize for &[u8] {
-    #[inline(always)]
-    fn serialize(&self, ser: &mut impl crate::prelude::Serializer) {
-        debug_assert!(self.is_ascii(), "Not Ascii '{:x?}'", self);
-        ser.serialize_slice(*self);
-        ser.serialize_soh();
-    }
-}
-impl Value for &[u8] {}
+pub trait StringValue: Value + AsRef<str> {}
 impl Serialize for &str {
     #[inline(always)]
     fn serialize(&self, ser: &mut impl crate::prelude::Serializer) {
@@ -31,6 +14,7 @@ impl Serialize for &str {
     }
 }
 impl Value for &str {}
+impl StringValue for &str {}
 impl Serialize for String {
     #[inline(always)]
     fn serialize(&self, ser: &mut impl crate::prelude::Serializer) {
@@ -40,15 +24,18 @@ impl Serialize for String {
     }
 }
 impl Value for String {}
+impl StringValue for String {}
 impl Serialize for char {
     #[inline(always)]
     fn serialize(&self, ser: &mut impl crate::prelude::Serializer) {
         debug_assert!(self.is_ascii(), "Not Ascii '{:x?}'", self);
         ser.serialize_u8(*self as u8);
+        ser.serialize_soh();
     }
 }
 impl Value for char {}
 
+pub trait NumericValue: Value {}
 macro_rules! impl_value_for_number {
     ($TYPE:ty) => {
         impl Serialize for $TYPE {
@@ -59,6 +46,7 @@ macro_rules! impl_value_for_number {
             }
         }
         impl Value for $TYPE {}
+        impl NumericValue for $TYPE {}
     };
 }
 impl_value_for_number!(i8);
@@ -77,28 +65,7 @@ impl_value_for_number!(u128);
 impl_value_for_number!(f64);
 impl_value_for_number!(f32);
 
-pub struct Tag(u32);
-impl From<u32> for Tag {
-    #[inline(always)]
-    fn from(value: u32) -> Self {
-        Self(value)
-    }
-}
-impl Serialize for Tag {
-    #[inline(always)]
-    fn serialize(&self, ser: &mut impl Serializer) {
-        ser.serialize_slice(self.0.to_string().as_bytes());
-        ser.serialize_eqs();
-    }
-}
-
 pub trait Field: Serialize {
     fn tag(&self) -> Tag;
     fn value(&self) -> &impl Value;
-
-    // fn write(&self, dst: &mut impl bytes::BufMut) {
-    //     self.tag().serialize_tag(dst);
-    //     // self.value().serialize_value(dst);
-    // }
 }
-

@@ -1,5 +1,5 @@
 ///! Key docs https://www.fixtrading.org/standards/tagvalue-online/
-pub mod inbound;
+pub mod des;
 pub mod ser;
 
 const SOH_U8: u8 = 0x01;

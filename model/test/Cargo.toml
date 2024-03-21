@@ -15,8 +15,8 @@ categories.workspace = true
 fix_model_generator = { workspace = true }
 fix_model_core = { workspace = true, features = ["unittest"] }
 serde = { workspace = true }
+serde_json = { workspace = true }
 bytes = { workspace = true }
-
 # testing
 trybuild = { workspace = true }
 
@@ -24,3 +24,4 @@ trybuild = { workspace = true }
 log = { workspace = true }
 env_logger = { workspace = true }
 colored = { workspace = true }
+

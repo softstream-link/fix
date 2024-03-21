@@ -1,4 +1,4 @@
-use super::types::{Field, Tag, Value};
+use crate::prelude::{Field, Tag, Value};
 use super::{Serialize, Serializer};
 use std::fmt::{Debug, Display};
 
@@ -8,7 +8,7 @@ use bytes::{BufMut, BytesMut};
 pub struct Header<'h>(&'h BytesMut);
 impl Display for Header<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let header = String::from_utf8_lossy(self.0).replace(crate::parser::SOH_CHAR, crate::parser::PIPE_STR);
+        let header = String::from_utf8_lossy(self.0).replace(crate::serdes::SOH_CHAR, crate::serdes::PIPE_STR);
         write!(f, "{}", header)
     }
 }
@@ -24,11 +24,11 @@ impl<'b> Serializer for Body<'b> {
     }
     #[inline(always)]
     fn serialize_eqs(&mut self) {
-        self.0.put_u8(crate::parser::EQS_U8);
+        self.0.put_u8(crate::serdes::EQS_U8);
     }
     #[inline(always)]
     fn serialize_soh(&mut self) {
-        self.0.put_u8(crate::parser::SOH_U8);
+        self.0.put_u8(crate::serdes::SOH_U8);
     }
     #[inline(always)]
     fn serialize_tag_value(&mut self, tag: Tag, value: impl Value) {
@@ -48,14 +48,14 @@ impl<'b> Serializer for Body<'b> {
 
 impl Display for Body<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let body = String::from_utf8_lossy(self.0).replace(crate::parser::SOH_CHAR, crate::parser::PIPE_STR);
+        let body = String::from_utf8_lossy(self.0).replace(crate::serdes::SOH_CHAR, crate::serdes::PIPE_STR);
         write!(f, "{}", body)
     }
 }
 pub struct Trailer<'t>(&'t BytesMut);
 impl Display for Trailer<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let trailer = String::from_utf8_lossy(self.0).replace(crate::parser::SOH_CHAR, crate::parser::PIPE_STR);
+        let trailer = String::from_utf8_lossy(self.0).replace(crate::serdes::SOH_CHAR, crate::serdes::PIPE_STR);
         write!(f, "{}", trailer)
     }
 }
@@ -135,9 +135,9 @@ impl Debug for HeapSerializer {
 }
 impl Display for HeapSerializer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let header = String::from_utf8_lossy(&self.header).replace(crate::parser::SOH_CHAR, crate::parser::PIPE_STR);
-        let body = String::from_utf8_lossy(&self.body).replace(crate::parser::SOH_CHAR, crate::parser::PIPE_STR);
-        let trailer = String::from_utf8_lossy(&self.trailer).replace(crate::parser::SOH_CHAR, crate::parser::PIPE_STR);
+        let header = String::from_utf8_lossy(&self.header).replace(crate::serdes::SOH_CHAR, crate::serdes::PIPE_STR);
+        let body = String::from_utf8_lossy(&self.body).replace(crate::serdes::SOH_CHAR, crate::serdes::PIPE_STR);
+        let trailer = String::from_utf8_lossy(&self.trailer).replace(crate::serdes::SOH_CHAR, crate::serdes::PIPE_STR);
         write!(f, "header: '{}', body: '{}', trailer: '{}'", header, body, trailer)
     }
 }
@@ -157,14 +157,10 @@ mod test {
         msg.serialize_tag_value(1.into(), v);
         let v = "string".to_string();
         msg.serialize_tag_value(2.into(), v);
-        let v = b"array";
-        msg.serialize_tag_value(3.into(), v);
-        let v = b"slice".as_slice();
-        msg.serialize_tag_value(4.into(), v);
 
         info!("msg: {:?}", msg);
         info!("msg: {}", msg);
-        assert_eq!(msg.body().to_string(), String::from("1=str|2=string|3=array|4=slice|"));
+        assert_eq!(msg.body().to_string(), String::from("1=str|2=string|"));
     }
 
     #[test]
@@ -174,12 +170,10 @@ mod test {
 
         let v = 'a';
         msg.serialize_tag_value(1.into(), v);
-        let v = b"b";
-        msg.serialize_tag_value(2.into(), v);
 
         info!("msg: {:?}", msg);
         info!("msg: {}", msg);
-        assert_eq!(msg.body().to_string(), String::from("1=a|2=b|"));
+        assert_eq!(msg.body().to_string(), String::from("1=a|"));
     }
 
     #[test]

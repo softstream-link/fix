@@ -16,7 +16,7 @@
 //     );
 // }
 
-use fix_model_generator::prelude::*;
+use fix_model_generator::{fix_string, prelude::*};
 
 use fix_model_test::unittest::setup;
 use fix_model_test::{create_target_dir, resource_to_string};

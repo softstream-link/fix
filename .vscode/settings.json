@@ -1,15 +1,20 @@
 {
     "rust-analyzer.cargo.features": [
-        "full"
+        "develop"
     ],
     "workbench.editor.revealIfOpen": true,
     "cSpell.words": [
         "canonicalize",
+        "fixerr",
+        "fixstr",
+        "fixstring",
         "FIXT",
+        "fixtag",
         "fnumber",
         "inumber",
         "NUMINGROUP",
         "quickfix",
+        "repr",
         "SEQNUM",
         "servicepack",
         "trybuild",

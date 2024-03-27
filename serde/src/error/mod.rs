@@ -14,17 +14,21 @@ pub enum Error {
     // are specific to the format, in this case FIX.
     TagStringIsNotNumeric(FixString),
     SliceIsNotValidAscii,
-    EOFWithOutSOH,
+    Eof,
     TrailingBytes,
+    EmptyValue,
+    InvalidUnsignedInteger,
     TODO,
 }
 impl std::error::Error for Error {}
 impl serde::ser::Error for Error {
+    #[inline(always)]
     fn custom<T: std::fmt::Display>(msg: T) -> Self {
         Error::Message(msg.to_string())
     }
 }
 impl serde::de::Error for Error {
+    #[inline(always)]
     fn custom<T: std::fmt::Display>(msg: T) -> Self {
         Error::Message(msg.to_string())
     }
@@ -36,7 +40,9 @@ impl std::fmt::Display for Error {
             Error::TagStringIsNotNumeric(val) => write!(f, "TagStringIsNotNumeric: {}", val),
             Error::SliceIsNotValidAscii => write!(f, "SliceIsNotValidAscii"),
             Error::TrailingBytes => write!(f, "TrailingBytes"),
-            Error::EOFWithOutSOH => write!(f, "StreamEndsWithOutSOH"),
+            Error::Eof => write!(f, "StreamEndsWithOutSOH"),
+            Error::EmptyValue => write!(f, "EmptyValue"),
+            Error::InvalidUnsignedInteger => write!(f, "InvalidUnsignedInteger"),
             Error::TODO => write!(f, "TODO"),
         }
     }

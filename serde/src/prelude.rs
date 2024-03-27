@@ -1,3 +1,4 @@
 pub use crate::error::{Error, Result};
-pub use crate::ser::{to_bytes, HeapSerializer};
+pub use crate::ser::serializer::{to_bytes, Serializer};
+pub use crate::de::deserializer::{from_slice, Deserializer};
 pub use crate::types::{fixstr::FixStr, fixstring::FixString, fixtag::Tag, FixStringLike};

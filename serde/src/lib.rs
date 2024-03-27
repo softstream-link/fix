@@ -5,10 +5,10 @@ pub mod error;
 pub mod types;
 
 
-const SOH_U8: u8 = 0x01;
-const SOH_CHAR: char = SOH_U8 as char;
+const SOH: u8 = 0x01;
+const EQS: u8 = b'=';
+const SOH_CHAR: char = SOH as char;
 const PIPE_STR: &'static str = "|";
-const EQS_U8: u8 = b'=';
 
 #[cfg(feature = "unittest")]
 pub mod unittest;

@@ -26,6 +26,8 @@ serde_json = { workspace = true, optional = true }
 fix_model_generator = { workspace = true }
 fix_model_test = { workspace = true }
 criterion = { workspace = true }
+fix_serde = { workspace = true , features = ["unittest"] }
+
 
 
 [features]

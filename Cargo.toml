@@ -26,6 +26,7 @@ bytes = { version = "1.5" }
 fix_model_test = { path = "model/test" }
 fix_model_generator = { path = "model/generator" }
 fix_model_core = { path = "model/core" }
+fix_serde = { path = "serde" }
 
 # logging
 log = { version = "0.4" }

@@ -1,10 +1,9 @@
 use std::{
-    borrow::Borrow,
-    fmt::{self, Debug, Display},
-    ops::Deref,
+    any::type_name, borrow::Borrow, fmt::{self, Debug, Display}, ops::Deref
 };
 
-use crate::prelude::{Error, FixStr, Result};
+use crate::error::Error;
+use crate::prelude::{FixStr, Result};
 // use serde::{de::Visitor, de::Deserialize, Serialize};
 
 use super::FixStringLike;
@@ -106,7 +105,8 @@ impl serde::ser::Serialize for FixString {
 impl<'de> serde::de::Deserialize<'de> for FixString {
     #[inline(always)]
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> std::result::Result<Self, D::Error> {
-        deserializer.deserialize_byte_buf(FixStringVisitor)
+        println!("FixString::deserialize deserializer: {}", type_name::<D>());
+        deserializer.deserialize_string(FixStringVisitor)
     }
 }
 impl FixStringLike for FixString {}
@@ -119,11 +119,19 @@ impl<'de> serde::de::Visitor<'de> for FixStringVisitor {
         formatter.write_str("a FixString")
     }
 
-    fn visit_byte_buf<E: serde::de::Error>(self, v: Vec<u8>) -> std::prelude::v1::Result<Self::Value, E> {
-        match FixString::try_from(v){
-            Ok(x) => Ok(x),
-            Err(e) => Err(E::custom(e.to_string())),
-        }
+    // // used by fix_serde to avoid crating a utf8 string and related validation
+    // fn visit_byte_buf<E: serde::de::Error>(self, v: Vec<u8>) -> std::result::Result<Self::Value, E> {
+    //     match FixString::try_from(v) {
+    //         Ok(x) => Ok(x),
+    //         Err(e) => Err(E::custom(e.to_string())),
+    //     }
+    // }
+    // used by serde_json
+    fn visit_string<E: serde::de::Error>(self, v: String) -> std::result::Result<Self::Value, E> {
+        self.visit_str(v.as_str())
+    }
+    fn visit_str<E: serde::de::Error>(self, v: &str) -> std::result::Result<Self::Value, E> {
+        FixString::try_from(v).map_err(|e| E::custom(e.to_string()))
     }
 }
 #[cfg(test)]

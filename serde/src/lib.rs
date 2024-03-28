@@ -3,6 +3,7 @@ pub mod prelude;
 pub mod ser;
 pub mod error;
 pub mod types;
+pub(crate) mod macros;
 
 
 const SOH: u8 = 0x01;

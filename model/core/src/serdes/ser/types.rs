@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Display};
 
-use crate::prelude::{Serialize, Serializer, Tag};
+use crate::prelude::{Serialize, Tag};
 
 pub trait Value: Serialize + Display + Debug + Clone + PartialEq {}
 

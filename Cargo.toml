@@ -1,5 +1,8 @@
 [workspace]
-members = ["model/core", "model/generator", "model/test", "serde"]
+members = [
+    # "model/core", "model/generator", "model/test", 
+    "serde"
+    ]
 resolver = "2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

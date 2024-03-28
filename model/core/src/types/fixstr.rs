@@ -1,11 +1,11 @@
 use std::{
-    borrow::Borrow,
+    // borrow::Borrow,
     fmt::{Debug, Display},
     mem::transmute,
     ops::Deref,
 };
 
-use crate::prelude::{FixString, Tag};
+use crate::prelude::FixString;
 
 #[repr(transparent)]
 #[derive(PartialEq)]
@@ -57,7 +57,7 @@ mod tests {
     use super::*;
     use crate::unittest::setup;
     use log::info;
-
+    use std::borrow::Borrow;
     #[test]
     fn test_borrow_fix_string() -> Result<(), String> {
         setup::log::configure();

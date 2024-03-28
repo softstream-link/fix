@@ -43,6 +43,48 @@ fn test_usize_deserialize() {
 }
 
 #[test]
+fn test_enum() {
+    setup::log::configure();
+
+    // <field number='4' name='AdvSide' type='CHAR'>
+    //   <value enum='B' description='BUY' />
+    //   <value enum='S' description='SELL' />
+    //   <value enum='X' description='CROSS' />
+    //   <value enum='T' description='TRADE' />
+    // </field>
+
+    #[derive(Serialize, Deserialize, Debug, PartialEq)]
+    enum AdvSide {
+        #[serde(rename = "B")]
+        #[serde(alias = "BUY")]
+        Buy,
+        #[serde(rename = "S")]
+        #[serde(alias = "SELL")]
+        Sell,
+        #[serde(rename = "X")]
+        #[serde(alias = "CROSS")]
+        Cross,
+        #[serde(rename = "T")]
+        #[serde(alias = "TRADE")]
+        Trade,
+    }
+    let inp_enum = AdvSide::Buy;
+    info!("inp_enum: {:?}", inp_enum);
+
+    let mut fix_ser = to_bytes(&inp_enum).unwrap();
+    fix_ser.serialize_soh().unwrap();
+    info!("fix_ser: {}", fix_ser);
+    let json_ser = serde_json::to_string(&inp_enum).unwrap();
+    info!("json_ser: {}", json_ser);
+
+    let out_enum_fix: AdvSide = from_slice(&fix_ser).unwrap();
+    info!("out_enum_fix: {:?}", out_enum_fix);
+    let out_enum_json: AdvSide = serde_json::from_str(&json_ser).unwrap();
+    info!("out_enum_json: {:?}", out_enum_json);
+    assert_eq!(out_enum_fix, out_enum_json);
+}
+
+#[test]
 fn test_msg_deserialize() {
     setup::log::configure();
 
@@ -85,8 +127,4 @@ fn test_msg_deserialize() {
     let out_msg_json: Msg<FixString> = serde_json::from_str(&json_ser).unwrap();
     info!("out_msg_json: {:?}", out_msg_json);
     assert_eq!(out_msg_fix, out_msg_json);
-
-    // let jsn = r#" { "2":"DEF", "7": 100, "1":"ABC" } "#;
-    // let msg: Msg<FixString> = from_str(&jsn).unwrap();
-    // info!("msg: {:?}", msg);
 }

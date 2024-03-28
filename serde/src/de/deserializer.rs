@@ -1,9 +1,9 @@
-use std::any::type_name;
-
+use super::enums::FixUnitVariantAccess;
 use super::macros::deserialize_unimplemented;
 use super::map::FixMapAccess;
 use super::read::{Read, SliceRead};
 use crate::error::{Error, Result};
+use crate::macros::asserted_short_name;
 use serde::de::{self};
 
 pub struct Deserializer<R> {
@@ -68,8 +68,11 @@ impl<'de, 'any, R: Read<'de>> de::Deserializer<'de> for &'any mut Deserializer<R
         self.deserialize_map(visitor)
     }
 
+    fn deserialize_enum<V: de::Visitor<'de>>(self, _name: &'static str, _variants: &'static [&'static str], visitor: V) -> Result<V::Value> {
+        visitor.visit_enum(FixUnitVariantAccess::new(self))
+    }
     deserialize_unimplemented!(
-        Deserializer<R>,
+        asserted_short_name!("Deserializer", Self),
         deserialize_any(self, _visitor: V),
         deserialize_bool(self, _visitor: V),
         deserialize_i8(self, _visitor: V),
@@ -92,19 +95,19 @@ impl<'de, 'any, R: Read<'de>> de::Deserializer<'de> for &'any mut Deserializer<R
         deserialize_seq(self, _visitor: V),
     );
     deserialize_unimplemented!(
-        Deserializer<R>,
+        asserted_short_name!("Deserializer", Self),
         deserialize_unit_struct(self, _name: &'static str, _visitor: V)
     );
+    // deserialize_unimplemented!(
+    //     Deserializer<R>,
+    //     deserialize_enum(self, _name: &'static str, _variants: &'static [&'static str], _visitor: V)
+    // );
     deserialize_unimplemented!(
-        Deserializer<R>,
-        deserialize_enum(self, _name: &'static str, _variants: &'static [&'static str], _visitor: V)
-    );
-    deserialize_unimplemented!(
-        Deserializer<R>,
+        asserted_short_name!("Deserializer", Self),
         deserialize_tuple(self, _len: usize, _visitor: V)
     );
     deserialize_unimplemented!(
-        Deserializer<R>,
+        asserted_short_name!("Deserializer", Self),
         deserialize_tuple_struct(self, _name: &'static str, _len: usize, _visitor: V)
     );
 }

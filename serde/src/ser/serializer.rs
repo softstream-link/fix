@@ -8,8 +8,8 @@ use serde::{ser, Serialize};
 // use serde_json::value::Serializer;
 use super::write::{BytesWrite, Write};
 
+use super::macros::serialize_unimplemented;
 use crate::error::{Error, Result};
-
 pub struct Serializer<W> {
     write: W,
 }
@@ -58,7 +58,6 @@ pub fn to_bytes<T: ser::Serialize>(value: &T) -> Result<Serializer<BytesWrite>> 
     let write = BytesWrite::new(BytesMut::new());
     let ser = from_trait(write, value);
     ser
-
 }
 // pub struct Serializer1 {
 //     header: BytesMut,
@@ -109,34 +108,6 @@ impl<W: Write> ser::Serializer for &mut Serializer<W> {
 
     type SerializeStructVariant = Self;
 
-    fn serialize_bool(self, v: bool) -> Result<()> {
-        todo!()
-    }
-
-    fn serialize_i8(self, v: i8) -> Result<()> {
-        todo!()
-    }
-
-    fn serialize_i16(self, v: i16) -> Result<()> {
-        todo!()
-    }
-
-    fn serialize_i32(self, v: i32) -> Result<()> {
-        todo!()
-    }
-
-    fn serialize_i64(self, v: i64) -> Result<()> {
-        todo!()
-    }
-
-    fn serialize_u8(self, v: u8) -> Result<()> {
-        todo!()
-    }
-
-    fn serialize_u16(self, v: u16) -> Result<()> {
-        todo!()
-    }
-
     fn serialize_u32(self, v: u32) -> Result<()> {
         self.write.write_slice(v.to_string().as_bytes());
         Ok(())
@@ -147,24 +118,8 @@ impl<W: Write> ser::Serializer for &mut Serializer<W> {
         Ok(())
     }
 
-    fn serialize_f32(self, v: f32) -> Result<()> {
-        todo!()
-    }
-
-    fn serialize_f64(self, v: f64) -> Result<()> {
-        todo!()
-    }
-
-    fn serialize_char(self, v: char) -> Result<()> {
-        todo!()
-    }
-
     fn serialize_str(self, v: &str) -> Result<()> {
         self.write.write_slice(v.as_bytes())
-    }
-
-    fn serialize_bytes(self, v: &[u8]) -> Result<()> {
-        todo!()
     }
 
     fn serialize_none(self) -> Result<()> {
@@ -186,8 +141,8 @@ impl<W: Write> ser::Serializer for &mut Serializer<W> {
         todo!()
     }
 
-    fn serialize_unit_variant(self, name: &'static str, variant_index: u32, variant: &'static str) -> Result<()> {
-        todo!()
+    fn serialize_unit_variant(self, _name: &'static str, _variant_index: u32, variant: &'static str) -> Result<()> {
+       self.write.write_slice(variant.as_bytes())
     }
 
     fn serialize_newtype_struct<T: ?Sized>(self, name: &'static str, value: &T) -> Result<()>
@@ -240,9 +195,27 @@ impl<W: Write> ser::Serializer for &mut Serializer<W> {
         variant_index: u32,
         variant: &'static str,
         len: usize,
-    ) -> std::prelude::v1::Result<Self::SerializeStructVariant, Self::Error> {
+    ) -> Result<Self::SerializeStructVariant> {
         todo!()
     }
+
+    serialize_unimplemented!(
+        Serializer<W>,
+        serialize_bool(self, _value: bool),
+        serialize_i8(self, _value: i8),
+        serialize_i16(self, _value: i16),
+        serialize_i32(self, _value: i32),
+        serialize_i64(self, _value: i64),
+
+        serialize_u8(self, _value: u8),
+        serialize_u16(self, _value: u16),
+
+        serialize_f32(self, _value: f32),
+        serialize_f64(self, _value: f64),
+
+        serialize_char(self, _value: char),
+        serialize_bytes(self, _value: &[u8]),
+    );
 }
 
 impl<W: Write> ser::SerializeSeq for &mut Serializer<W> {
@@ -368,33 +341,16 @@ impl<W: Write> ser::SerializeStructVariant for &mut Serializer<W> {
     }
 }
 
-// pub fn to_bytes(value: &impl Serialize) -> Result<Serializer1> {
-//     let mut ser = Serializer1::with_capacity(1024);
-//     value.serialize(&mut ser)?;
-//     Ok(ser)
-// }
-
 #[cfg(test)]
 #[cfg(feature = "unittest")]
 mod test {
     use crate::unittest::setup;
 
     use super::*;
-    use crate::prelude::{FixStr, FixString, FixStringLike, Tag};
+    use crate::prelude::{FixStr, FixString, FixStringLike};
     use log::info;
     use serde::Deserialize;
     use serde_json::{from_str, to_string};
-
-    #[test]
-    fn test_tag_serialize() {
-        setup::log::configure();
-        let tag = Tag::new(1);
-        let fix = to_bytes(&tag).unwrap();
-        info!("fix: {}", fix);
-        let jsn = to_string(&tag).unwrap();
-        info!("jsn: {}", jsn);
-        assert_eq!(jsn, fix.to_string());
-    }
 
     #[test]
     fn test_fix_string_serialize() {

@@ -71,7 +71,7 @@ impl Debug for FixStr {
         write!(f, "{:?}", self.to_string())?;
 
         #[cfg(feature = "assume_u8_is_ascii")]
-        write!(f, "{:?}", unsafe { std::std::from_utf8_unchecked(self) })?;
+        write!(f, "{:?}", unsafe { std::from_utf8_unchecked(self) })?;
 
         Ok(())
     }

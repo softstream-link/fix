@@ -1,38 +1,29 @@
-use crate::prelude::{Error, Result};
-
-use super::macros::deserialize_unimplemented;
+use super::read::Read;
+use super::{deserializer::Deserializer, macros::deserialize_unimplemented};
+use crate::error::{Error, Result};
 use crate::macros::asserted_short_name;
-use super::{deserializer::Deserializer, read::Read};
 use serde::de::{self};
 
-// https://doc.rust-lang.org/rust-by-example/scope/lifetime/lifetime_bounds.html
-struct FixTagIdentifier<'any, R: 'any> {
+struct FixEnumIdentifier<'any, R> {
     de: &'any mut Deserializer<R>,
 }
-impl<'any, R: 'any> FixTagIdentifier<'any, R> {
+impl<'any, R> FixEnumIdentifier<'any, R> {
     #[inline(always)]
     fn new(de: &'any mut Deserializer<R>) -> Self {
         Self { de }
     }
 }
-
-impl<'de, 'any, R: Read<'de> + 'any> de::Deserializer<'de> for FixTagIdentifier<'any, R> {
+impl<'de, 'any, R: Read<'de> + 'any> de::Deserializer<'de> for FixEnumIdentifier<'any, R> {
     type Error = Error;
     fn deserialize_identifier<V: de::Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
-        let tag = self.de.read.parse_fix_tag()?;
-        // visitor here is typically a #[derive(Deserialize)] __Visitor that
-        // maps either "" or b"" to a enum __Field { __field0, __field1, ... }
+        let tag = self.de.read.parse_fix_value()?;
         let field = visitor.visit_bytes(tag);
         field
     }
 
-    fn deserialize_any<V: de::Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
-        let tag = self.de.read.parse_unsigned()?;
-        visitor.visit_u64(tag)
-    }
-
     deserialize_unimplemented!(
         asserted_short_name!("FixTagIdentifier", Self),
+        deserialize_any(self, _visitor: V),
         deserialize_bool(self, _visitor: V),
         deserialize_i8(self, _visitor: V),
         deserialize_i16(self, _visitor: V),
@@ -56,51 +47,60 @@ impl<'de, 'any, R: Read<'de> + 'any> de::Deserializer<'de> for FixTagIdentifier<
         deserialize_ignored_any(self, _visitor: V),
     );
     deserialize_unimplemented!(
-        asserted_short_name!("FixTagIdentifier", Self),
+        asserted_short_name!("FixEnumIdentifier", Self),
         deserialize_unit_struct(self, _name: &'static str, _visitor: V),
         deserialize_newtype_struct(self, _name: &'static str, _visitor: V)
     );
     deserialize_unimplemented!(
-        asserted_short_name!("FixTagIdentifier", Self),
+        asserted_short_name!("FixEnumIdentifier", Self),
         deserialize_tuple(self, _len: usize, _visitor: V)
     );
     deserialize_unimplemented!(
-        asserted_short_name!("FixTagIdentifier", Self),
+        asserted_short_name!("FixEnumIdentifier", Self),
         deserialize_tuple_struct(self, _name: &'static str, _len: usize, _visitor: V)
     );
     deserialize_unimplemented!(
-        asserted_short_name!("FixTagIdentifier", Self),
+        asserted_short_name!("FixEnumIdentifier", Self),
         deserialize_struct(self, _name: &'static str, _fields: &'static [&'static str], _visitor: V),
         deserialize_enum(self, _name: &'static str, _variants: &'static [&'static str], _visitor: V)
     );
 }
-pub(super) struct FixMapAccess<'any, R: 'any> {
+
+pub(crate) struct FixUnitVariantAccess<'any, R> {
     de: &'any mut Deserializer<R>,
 }
-impl<'any, R: 'any> FixMapAccess<'any, R> {
+impl<'any, R: 'any> FixUnitVariantAccess<'any, R> {
     #[inline(always)]
     pub fn new(de: &'any mut Deserializer<R>) -> Self {
-        FixMapAccess { de }
+        FixUnitVariantAccess { de }
     }
 }
 
-impl<'de, 'any, R: Read<'de> + 'any> de::MapAccess<'de> for FixMapAccess<'any, R> {
+impl<'de, 'any, R: Read<'de> + 'any> de::EnumAccess<'de> for FixUnitVariantAccess<'any, R> {
+    type Error = Error;
+    type Variant = Self;
+    fn variant_seed<V: de::DeserializeSeed<'de>>(self, seed: V) -> Result<(V::Value, Self::Variant)> {
+        let variant = seed.deserialize(FixEnumIdentifier::new(&mut *self.de))?;
+        Ok((variant, self))
+    }
+}
+impl<'de, 'any, R: Read<'de> + 'any> de::VariantAccess<'de> for FixUnitVariantAccess<'any, R> {
     type Error = Error;
 
-    fn next_key_seed<K: de::DeserializeSeed<'de>>(&mut self, seed: K) -> Result<Option<K::Value>> {
-        match self.de.read.peek()? {
-            // not EndOfFile
-            Some(_) => {
-                let res = seed.deserialize(FixTagIdentifier::new(self.de));
-                res.map(Some)
-            }
-            // EndOfFiles
-            _ => Ok(None),
-        }
+    fn unit_variant(self) -> Result<()> {
+        Ok(())
     }
 
-    fn next_value_seed<V: de::DeserializeSeed<'de>>(&mut self, seed: V) -> Result<V::Value> {
-        let res = seed.deserialize(&mut *self.de);
-        res
+    fn newtype_variant_seed<T: de::DeserializeSeed<'de>>(self, _seed: T) -> Result<T::Value> {
+        // TODO add unimplimented like macro to include class name in the error
+        Err(Error::Message("newtype_variant_seed is not supported".to_string()))
+    }
+
+    fn tuple_variant<V: de::Visitor<'de>>(self, _len: usize, _visitor: V) -> Result<V::Value> {
+        Err(Error::Message("tuple_variant is not supported".to_string()))
+    }
+
+    fn struct_variant<V: de::Visitor<'de>>(self, _fields: &'static [&'static str], _visitor: V) -> Result<V::Value> {
+        Err(Error::Message("struct_variant is not supported".to_string()))
     }
 }

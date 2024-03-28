@@ -1,5 +1,7 @@
 use std::{
-    any::type_name, borrow::Borrow, fmt::{self, Debug, Display}, ops::Deref
+    borrow::Borrow,
+    fmt::{self, Debug, Display},
+    ops::Deref,
 };
 
 use crate::error::Error;
@@ -105,7 +107,6 @@ impl serde::ser::Serialize for FixString {
 impl<'de> serde::de::Deserialize<'de> for FixString {
     #[inline(always)]
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> std::result::Result<Self, D::Error> {
-        println!("FixString::deserialize deserializer: {}", type_name::<D>());
         deserializer.deserialize_string(FixStringVisitor)
     }
 }

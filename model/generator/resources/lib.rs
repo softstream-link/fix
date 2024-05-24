@@ -7,3 +7,4 @@ include!(concat!(env!("OUT_DIR"), "/repgrps_defs.rs"));
 include!(concat!(env!("OUT_DIR"), "/repgrps_impls.rs"));
 include!(concat!(env!("OUT_DIR"), "/msg_enums.rs"));
 include!(concat!(env!("OUT_DIR"), "/index.rs"));
+include!(concat!(env!("OUT_DIR"), "/helpers.rs"));

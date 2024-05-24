@@ -18,7 +18,7 @@ pub struct RFModel {
     pub errors: Vec<Error>,
 }
 impl RFModel {
-    pub fn ready(&mut self) {
+    pub fn complete_preparation(&mut self) {
         self.fld_defs.sort(); // by tag, only estetics
         self.msg_defs.sort_by(|a, b| a.name.cmp(&b.name)); // by name for binary search lookup
         self.rep_grp_defs.sort_by(|a, b| a.0.name.cmp(&b.0.name)); // by name for binary search lookup
@@ -29,15 +29,23 @@ impl RFModel {
             #(#flds)*
         })
     }
-    pub fn msg_defs_to_code(&self) -> String {
-        let msgs = self
+    pub fn msg_to_code(&self) -> (String, String) {
+        let token_parts = self
             .msg_defs
             .iter()
-            .map(|msg_def| MessageTokenParts::from((msg_def, self)).msg_def)
+            .map(|msg_def| MessageTokenParts::from((msg_def, self)))
             .collect::<Vec<_>>();
-        format_token_stream(&quote! {
-            #(#msgs)*
-        })
+
+        let msg_defs = token_parts.iter().map(|token_part| &token_part.msg_def).collect::<Vec<_>>();
+        let msg_defs = format_token_stream(&quote! {
+            #(#msg_defs)*
+        });
+
+        let msg_impls = token_parts.iter().map(|token_part| &token_part.msg_impls).collect::<Vec<_>>();
+        let msg_impls = format_token_stream(&quote! {
+            #(#msg_impls)*
+        });
+        (msg_defs, msg_impls)
     }
 
     pub fn msg_defs_enum_to_code(&self) -> String {
@@ -62,7 +70,7 @@ impl RFModel {
                 Some(quote! (#name(#name #generic_names),))
             })
             .collect::<Vec<_>>();
-        // TODO add dynamic resolution of names
+        // TODO add dynamic generic resolution of names
         format_token_stream(&quote! {
             #[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Clone)]
             pub enum MsgApp<S, C, D>{
@@ -80,16 +88,6 @@ impl RFModel {
         })
     }
 
-    pub fn msg_impls_to_code(&self) -> String {
-        let impls = self
-            .msg_defs
-            .iter()
-            .map(|msg_def| MessageTokenParts::from((msg_def, self)).msg_impls)
-            .collect::<Vec<_>>();
-        format_token_stream(&quote! {
-            #(#impls)*
-        })
-    }
     pub fn repgrp_default_bounds(&self, rep_grp: &RFldDefRepGroup) -> TokenStream {
         let rep_grp_msg = &self.rep_grp_defs[self
             .rep_grp_defs
@@ -97,30 +95,43 @@ impl RFModel {
             .expect(format!("Missing repeading group definition for {:?}", rep_grp).as_str())];
         rep_grp_msg.0.default_trait_bounds(self)
     }
-    pub fn repgrp_defs_to_code(&self) -> String {
-        let repgrp_msgs = self
+    pub fn repgrp_to_code(&self) -> (String, String) {
+        let token_parts = self
             .rep_grp_defs
             .iter()
-            .map(|rep_grp_def| MessageTokenParts::from((rep_grp_def, self)).msg_def)
+            .map(|rep_grp_def| MessageTokenParts::from((rep_grp_def, self)))
             .collect::<Vec<_>>();
-        format_token_stream(&quote! {
+
+        let repgrp_msgs = token_parts.iter().map(|token_part| &token_part.msg_def).collect::<Vec<_>>();
+        let repgrp_msgs = format_token_stream(&quote! {
             #(#repgrp_msgs)*
-        })
+        });
+
+        let repgrp_impls = token_parts.iter().map(|token_part| &token_part.msg_impls).collect::<Vec<_>>();
+        let repgrp_impls = format_token_stream(&quote! {
+            #(#repgrp_impls)*
+        });
+        (repgrp_msgs, repgrp_impls)
     }
-    pub fn repgrp_impls_to_code(&self) -> String {
-        let repgrp_msgs = self
-            .rep_grp_defs
-            .iter()
-            .map(|rep_grp_def| MessageTokenParts::from((rep_grp_def, self)).msg_impls)
-            .collect::<Vec<_>>();
-        format_token_stream(&quote! {
-            #(#repgrp_msgs)*
-        })
-    }
+
     pub fn index_to_code(&self) -> String {
         let index = &self.index();
         format_token_stream(&quote! {
             #index
+        })
+    }
+    pub fn serde_methods_to_code(&self) -> String {
+        let schema_name = format_ident!("{}Schema", self.name);
+        let methods = quote!(
+            pub fn from_fix<'de, T: serde::Deserialize<'de>>(slice: &'de [u8]) -> fix_serde::prelude::Result<T> {
+                fix_serde::prelude::from_slice_with_schema(slice, #schema_name)
+            }
+            pub fn to_fix<T: serde::Serialize>(value: &T, capacity: Option<usize>) -> fix_serde::prelude::Result<fix_serde::prelude::Serializer<fix_serde::prelude::BytesWrite, #schema_name>> {
+                fix_serde::prelude::to_bytes_with_schema(value, capacity, #schema_name)
+            }
+        );
+        format_token_stream(&quote! {
+            #methods
         })
     }
     pub fn errors(&self) -> Vec<Error> {

@@ -1,7 +1,7 @@
 use super::component_def::{QFCompomentPart, QFComponentDef, QFComponentDefs};
 use super::field_def::{QFFieldDef, QFFieldDefs};
 use super::header_trailer_def::{QFHeaderDef, QFTrailerDef};
-use super::message_def::{QFMessageDef, QFMessageDefs};
+use super::message_def::{QFMessageDef, QFMessageDefs, QFMessagePart};
 use super::refs::{QFComponentRef, QFFieldRef};
 use super::repgroup_def::{QFGroupDef, QFGroupPart, QFRepGroupDef};
 use crate::prelude::RFModel;
@@ -52,19 +52,101 @@ impl QFModel {
     fn complete_preparation(&mut self) {
         (&mut self.fld_defs).sort();
         (&mut self.cmp_defs).sort();
-        // add header and trailer to messages so that thier rust structs are created
+
         {
+            // add header to messages so that thier rust structs are created
             self.msg_defs.defs.push(QFMessageDef {
-                name: "Header".to_string(),
+                name: "HeaderFull".to_string(),
                 msg_type: "N/A".to_string(),
                 msg_cat: "header".to_string(),
                 parts: Some(self.header_def.parts.clone()),
             });
+            const HEADER_PART1: &[&str] = &["BeginString", "BodyLength"];
+            self.msg_defs.defs.push(QFMessageDef {
+                name: "Header1".to_string(),
+                msg_type: "N/A".to_string(),
+                msg_cat: "header".to_string(),
+                parts: {
+                    Some(
+                        self.header_def
+                            .parts
+                            .iter()
+                            .filter_map(|f| match HEADER_PART1.contains(&f.name()) {
+                                true => Some(f.clone()),
+                                false => None,
+                            })
+                            .collect::<Vec<_>>(),
+                    )
+                },
+            });
+            const HEADER_PART2: &[&str] = &["MsgType", "SenderCompID", "TargetCompID"];
+            self.msg_defs.defs.push(QFMessageDef {
+                name: "Header2".to_string(),
+                msg_type: "N/A".to_string(),
+                msg_cat: "header".to_string(),
+                parts: {
+                    Some(
+                        self.header_def
+                            .parts
+                            .iter()
+                            .filter_map(|f| match HEADER_PART2.contains(&f.name()) {
+                                true => Some(f.clone()),
+                                false => None,
+                            })
+                            .collect::<Vec<_>>(),
+                    )
+                },
+            });
+
+            self.msg_defs.defs.push(QFMessageDef {
+                name: "Header3".to_string(),
+                msg_type: "N/A".to_string(),
+                msg_cat: "header".to_string(),
+                parts: {
+                    Some(
+                        self.header_def
+                            .parts
+                            .iter()
+                            .filter_map(|f| match !HEADER_PART1.contains(&f.name()) && !HEADER_PART2.contains(&f.name()) {
+                                true => Some(f.clone()),
+                                false => None,
+                            })
+                            .collect::<Vec<_>>(),
+                    )
+                },
+            });
+
+            self.header_def.parts.iter().for_each(|f| {
+                self.msg_defs.defs.push(QFMessageDef {
+                    name: "TagValueHeader".to_owned() + &f.name(),
+                    msg_type: "N/A".to_string(),
+                    msg_cat: "header".to_string(),
+                    parts: Some(vec![QFMessagePart::FieldRef(QFFieldRef {
+                        name: f.name().to_owned(),
+                        required: "Y".to_string(),
+                    })]),
+                });
+            });
+        }
+        // add trailer to messages so that thier rust structs are created
+        {
             self.msg_defs.defs.push(QFMessageDef {
                 name: "Trailer".to_string(),
                 msg_type: "N/A".to_string(),
                 msg_cat: "trailer".to_string(),
                 parts: Some(self.trailer_def.parts.clone()),
+            });
+
+            self.trailer_def.parts.iter().for_each(|f| {
+                self.msg_defs.defs.push(QFMessageDef {
+                    name: "TagValueTrailer".to_owned() + &f.name(),
+                    msg_type: "N/A".to_string(),
+                    msg_cat: "trailer".to_string(),
+                    parts: Some(vec![QFMessagePart::FieldRef(QFFieldRef {
+                        name: f.name().to_owned(),
+                        required: "Y".to_string(),
+                    })]),
+                });
             });
         }
 
@@ -77,6 +159,20 @@ impl QFModel {
                 .filter(|qf_field| qf_field.is_type_plain())
                 .cloned()
                 .collect::<Vec<_>>();
+            // add fld to messages so that thier rust structs are created
+
+            self.fld_defs_plain.iter().for_each(|f| {
+                // log::warn!("{:?}", f);
+                self.msg_defs.defs.push(QFMessageDef {
+                    name: "TagValue".to_owned() + &f.name,
+                    msg_type: "N/A".to_string(),
+                    msg_cat: "tag_value".to_string(),
+                    parts: Some(vec![QFMessagePart::FieldRef(QFFieldRef {
+                        name: f.name.clone(),
+                        required: "Y".to_string(),
+                    })]),
+                });
+            });
         }
 
         {
@@ -112,6 +208,26 @@ impl QFModel {
                     (len.clone(), data.clone())
                 })
                 .collect::<Vec<_>>();
+
+            // add binary flds to TagVale messages
+            self.fld_defs_len_data.iter().for_each(|f| {
+                // log::warn!("{:?}", f);
+                self.msg_defs.defs.push(QFMessageDef {
+                    name: "TagValue".to_owned() + &f.1.name, // data tag name
+                    msg_type: "N/A".to_string(),
+                    msg_cat: "tag_value".to_string(),
+                    parts: Some(vec![
+                        QFMessagePart::FieldRef(QFFieldRef {
+                            name: f.0.name.clone(),
+                            required: "Y".to_string(),
+                        }),
+                        QFMessagePart::FieldRef(QFFieldRef {
+                            name: f.1.name.clone(),
+                            required: "Y".to_string(),
+                        }),
+                    ]),
+                });
+            });
         }
     }
 
@@ -281,7 +397,7 @@ impl From<&QFModel> for RFModel {
             errors,
             name,
         };
-        rf_model.ready();
+        rf_model.complete_preparation();
         rf_model
     }
 }

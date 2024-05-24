@@ -61,7 +61,11 @@ impl RMessageMember {
                 // log::error!("default_bounds: rep group member name: {}", rep_grp.name);
                 rf_model.repgrp_default_bounds(rep_grp)
             }
-            _ => quote!(),
+            RFldDef::Data(data) => {
+                let member_type_name = format_ident!("{}", data.data_name);
+                quote!(#member_type_name<D>: Default,)
+            }
+            // _ => quote!(),
         }
     }
     pub fn name(&self) -> &str {
@@ -132,7 +136,7 @@ impl From<&RMessageMember> for TokenStream {
                 let member_type_name = format_ident!("{}", fld_meta.data_name);
                 let doc = format!(" {:?} New Type wrapper", fld_meta);
                 let member_type = match required {
-                    true => quote!(#member_type_name),
+                    true => quote!(#member_type_name<D>),
                     false => quote!(Option<#member_type_name<D>>),
                 };
                 quote!(

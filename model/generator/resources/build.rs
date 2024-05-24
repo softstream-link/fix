@@ -47,12 +47,11 @@ fn main() {
     cargo_info!(format!("fix fields output: {:?}", out_path));
     fs::write(&out_path, fields_code).unwrap();
 
-    let messages_def = r_model.msg_defs_to_code();
+    let (messages_def, messages_impls) = r_model.msg_to_code();
     let out_path = Path::new(&out_dir).join("messages_defs.rs");
     cargo_info!(format!("fix messages output: {:?}", out_path));
     fs::write(&out_path, messages_def).unwrap();
 
-    let messages_impls = r_model.msg_impls_to_code();
     let out_path = Path::new(&out_dir).join("messages_impls.rs");
     cargo_info!(format!("fix messages output: {:?}", out_path));
     fs::write(&out_path, messages_impls).unwrap();
@@ -62,12 +61,11 @@ fn main() {
     cargo_info!(format!("fix index output: {:?}", out_path));
     fs::write(&out_path, index_code).unwrap();
 
-    let repgrps_defs = r_model.repgrp_defs_to_code();
+    let (repgrps_defs, repgrps_impls) = r_model.repgrp_to_code();
     let out_path = Path::new(&out_dir).join("repgrps_defs.rs");
     cargo_info!(format!("fix messages output: {:?}", out_path));
     fs::write(&out_path, repgrps_defs).unwrap();
 
-    let repgrps_impls = r_model.repgrp_impls_to_code();
     let out_path = Path::new(&out_dir).join("repgrps_impls.rs");
     cargo_info!(format!("fix messages output: {:?}", out_path));
     fs::write(&out_path, repgrps_impls).unwrap();
@@ -76,6 +74,11 @@ fn main() {
     let out_path = Path::new(&out_dir).join("msg_enums.rs");
     cargo_info!(format!("fix messages output: {:?}", out_path));
     fs::write(&out_path, msg_enums).unwrap();
+
+    let helpers = r_model.serde_methods_to_code();
+    let out_path = Path::new(&out_dir).join("helpers.rs");
+    cargo_info!(format!("fix messages output: {:?}", out_path));
+    fs::write(&out_path, helpers).unwrap();
 
     println!("cargo::rerun-if-changed=build.rs");
     println!("cargo::rerun-if-changed=resources/{}", xml_name);

@@ -185,9 +185,10 @@ impl From<&RFldDefPlain> for TokenStream {
             RFldPlainType::String => quote!(
                 fix_model_generator::prelude::fix_string!(#name, #tag);
             ),
-            RFldPlainType::USize => quote!(
-                fix_model_generator::prelude::fix_usize!(#name, #tag);
-            ),
+            RFldPlainType::USize => match value.name.as_str() {
+                "BodyLength" => quote!(fix_model_generator::prelude::fix_usize_fixed_length!(#name, #tag);),
+                _ => quote!(fix_model_generator::prelude::fix_usize!(#name, #tag);),
+            },
             RFldPlainType::ISize => quote!(
                 fix_model_generator::prelude::fix_isize!(#name, #tag);
             ),

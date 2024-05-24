@@ -48,6 +48,9 @@ impl<S> Serializer<BytesWrite, S> {
     pub fn as_slice(&self) -> &[u8] {
         self
     }
+    pub fn join(&mut self, other: Self) {
+        self.write.join(other.write);
+    }
 }
 impl<S> Deref for Serializer<BytesWrite, S> {
     type Target = BytesWrite;

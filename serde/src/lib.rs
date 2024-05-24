@@ -3,7 +3,7 @@ pub mod error;
 pub(crate) mod macros;
 pub mod prelude;
 pub mod ser;
-pub mod frameing;
+pub mod framing;
 
 const SOH: u8 = 0x01;
 const EQS: u8 = b'=';

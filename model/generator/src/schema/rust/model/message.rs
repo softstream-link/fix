@@ -15,6 +15,7 @@ pub enum MessageCategory {
     RepGrp,
     Header,
     Trailer,
+    TagValue,
 }
 
 pub struct MessageTokenParts {

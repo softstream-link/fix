@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize};
 
-use super::message_def::QFMessageParts;
+use super::message_def::QFMessagePart;
 
 #[derive(Debug, Deserialize, Serialize)] 
 #[serde(rename = "header")]
 pub struct QFHeaderDef {
     #[serde(rename = "$value")]
-    pub(super) parts: Vec<QFMessageParts>,
+    pub(super) parts: Vec<QFMessagePart>,
 }
 
 
@@ -14,5 +14,5 @@ pub struct QFHeaderDef {
 #[serde(rename = "trailer")]
 pub struct QFTrailerDef {
     #[serde(rename = "$value")]
-    pub(super) parts: Vec<QFMessageParts>,
+    pub(super) parts: Vec<QFMessagePart>,
 }

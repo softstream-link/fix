@@ -54,27 +54,6 @@ fn test_root_42_fields() {
     // info!("qf: {:?}", qf);
 }
 
-// #[test]
-// fn test_root_x_msgs() {
-//     setup::log::configure();
-
-//     let (path, content) = resource_to_string!("FIX-5.0.xml");
-//     info!("path: {:?}", path);
-//     let _qf = QFModel::from(content);
-
-//     let (path, content) = resource_to_string!("FIX-5.0-SP1.xml");
-//     info!("path: {:?}", path);
-//     let _qf = QFModel::from(content);
-
-//     let (path, content) = resource_to_string!("FIX-5.0-SP2.xml");
-//     info!("path: {:?}", path);
-//     let _qf = QFModel::from(content);
-
-//     let (path, content) = resource_to_string!("FIXT-1.1.xml");
-//     info!("path: {:?}", path);
-//     let _qf = QFModel::from(content);
-// }
-
 #[test]
 fn test_root_42_msgs() {
     setup::log::configure_compact(log::LevelFilter::Info);
@@ -98,20 +77,21 @@ fn test_root_42_msgs() {
     info!("out_path: {:?}", out_path);
     fs::write(&out_path, fields_code).unwrap();
 
-    let messages_code = rf.msg_defs_to_code();
+    let (messages_code, messages_impl) = rf.msg_to_code();
     let out_path = Path::new(out_dir).join("messages_v42.rs");
     info!("out_path: {:?}", out_path);
     fs::write(&out_path, messages_code).unwrap();
-
-    let messages_impl = rf.msg_impls_to_code();
     let out_path = Path::new(out_dir).join("message_impls_v42.rs");
     info!("out_path: {:?}", out_path);
     fs::write(&out_path, messages_impl).unwrap();
 
-    let repgrp_messages_code = rf.repgrp_defs_to_code();
+    let (repgrp_messages_code, repgrp_messages_impl) = rf.repgrp_to_code();
     let out_path = Path::new(out_dir).join("repgrps_v42.rs");
     info!("out_path: {:?}", out_path);
     fs::write(&out_path, repgrp_messages_code).unwrap();
+    let out_path = Path::new(out_dir).join("repgrps_impls_v42.rs");
+    info!("out_path: {:?}", out_path);
+    fs::write(&out_path, repgrp_messages_impl).unwrap();
 
     let msg_enums = rf.msg_defs_enum_to_code();
     let out_path = Path::new(out_dir).join("msg_enums_v42.rs");
@@ -147,22 +127,20 @@ fn test_root_44_msgs() {
     info!("out_path: {:?}", out_path);
     fs::write(&out_path, fields_code).unwrap();
 
-    let messages_code = rf.msg_defs_to_code();
+    let (messages_code, messages_impl) = rf.msg_to_code();
     let out_path = Path::new(out_dir).join("messages_v44.rs");
     info!("out_path: {:?}", out_path);
     fs::write(&out_path, messages_code).unwrap();
 
-    let messages_impl = rf.msg_impls_to_code();
     let out_path = Path::new(out_dir).join("message_impls_v44.rs");
     info!("out_path: {:?}", out_path);
     fs::write(&out_path, messages_impl).unwrap();
 
-    let repgrp_messages_code = rf.repgrp_defs_to_code();
+    let (repgrp_messages_code, repgrp_messages_impl) = rf.repgrp_to_code();
     let out_path = Path::new(out_dir).join("repgrps_v44.rs");
     info!("out_path: {:?}", out_path);
     fs::write(&out_path, repgrp_messages_code).unwrap();
 
-    let repgrp_messages_impl = rf.repgrp_impls_to_code();
     let out_path = Path::new(out_dir).join("repgrps_impls_v44.rs");
     info!("out_path: {:?}", out_path);
     fs::write(&out_path, repgrp_messages_impl).unwrap();
@@ -174,6 +152,11 @@ fn test_root_44_msgs() {
 
     let index_code = rf.index_to_code();
     let out_path = Path::new(out_dir).join("index_v44.rs");
+    info!("out_path: {:?}", out_path);
+    fs::write(&out_path, index_code).unwrap();
+
+    let index_code = rf.serde_methods_to_code();
+    let out_path = Path::new(out_dir).join("helpers_v44.rs");
     info!("out_path: {:?}", out_path);
     fs::write(&out_path, index_code).unwrap();
 }

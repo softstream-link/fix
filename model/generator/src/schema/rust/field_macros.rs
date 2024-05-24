@@ -284,7 +284,7 @@ pub use fix_ascii_char_enum;
 #[macro_export]
 macro_rules! fix_data {
     ($NAME_LEN:ident, $TAG_LEN:literal, $NAME_DATA:ident, $TAG_DATA:literal) => {
-        #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Copy)]
+        #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Copy, Default)]
         pub struct $NAME_DATA<D>(D);
         impl<D> $NAME_DATA<D> {
             #[inline]
@@ -383,18 +383,24 @@ macro_rules! fix_data {
                 $NAME_DATA(value.as_slice().into())
             }
         }
-        impl Default for $NAME_DATA<fix_model_core::prelude::Data> {
-            #[inline]
-            fn default() -> Self {
-                <$NAME_DATA<&fix_model_core::prelude::dat>>::default().to_owned()
-            }
-        }
-        impl Default for $NAME_DATA<&fix_model_core::prelude::dat> {
-            #[inline]
-            fn default() -> Self {
-                $NAME_DATA(fix_model_core::prelude::dat::from_slice(concat!(stringify!($NAME_DATA), ":", stringify!($TAG_DATA), "@Default").as_bytes()))
-            }
-        }
+        // impl Default for $NAME_DATA<fix_model_core::prelude::Data> {
+        //     #[inline]
+        //     fn default() -> Self {
+        //         <$NAME_DATA<&fix_model_core::prelude::dat>>::default().to_owned()
+        //     }
+        // }
+        // impl Default for $NAME_DATA<&fix_model_core::prelude::dat> {
+        //     #[inline]
+        //     fn default() -> Self {
+        //         $NAME_DATA(fix_model_core::prelude::dat::from_slice(concat!(stringify!($NAME_DATA), ":", stringify!($TAG_DATA), "@Default").as_bytes()))
+        //     }
+        // }
+        // impl<'a> Default for $NAME_DATA<fix_model_core::prelude::dat_codec<'a>> {
+        //     #[inline]
+        //     fn default() -> Self {
+        //         $NAME_DATA(fix_model_core::prelude::dat_codec::from_slice(concat!(stringify!($NAME_DATA), ":", stringify!($TAG_DATA), "@Default").as_bytes()))
+        //     }
+        // }
 
         impl<D: std::fmt::Display + std::fmt::Debug> std::fmt::Display for $NAME_DATA<D>{
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -421,6 +427,45 @@ macro_rules! fix_data {
 pub use fix_data;
 
 #[macro_export]
+macro_rules! _fix_numeric_fixed_length {
+    ($NAME:ident, $TAG:literal, $TY:tt, $LEN:literal) => {
+        #[derive(serde::Deserialize, PartialEq, Clone, Default)]
+        pub struct $NAME($TY);
+        impl serde::Serialize for $NAME {
+            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                if serializer.is_human_readable() {
+                    return serializer.serialize_u64(self.0 as u64);
+                } else {
+                    let mut buf = itoa::Buffer::new();
+                    let value = buf.format(self.0);
+                    use std::io::Write;
+                    let mut buf_pad = [0u8; $LEN];
+                    write!(&mut buf_pad[..], concat!("{:0>", stringify!($LEN), "}"), value).unwrap();
+                    serializer.serialize_bytes(&buf_pad)
+                }
+            }
+        }
+        impl From<$TY> for $NAME {
+            #[inline]
+            fn from(value: $TY) -> Self {
+                Self::new(value)
+            }
+        }
+        $crate::_impl_new_and_value!($NAME, $TY);
+        $crate::_impl_field_meta!($NAME, $TAG);
+        $crate::_debug!($NAME);
+        $crate::_display!($NAME);
+    };
+}
+#[macro_export]
+macro_rules! fix_usize_fixed_length {
+    ($NAME:ident, $TAG:literal) => {
+        $crate::_fix_numeric_fixed_length!($NAME, $TAG, usize, 20);
+    };
+}
+pub use fix_usize_fixed_length;
+
+#[macro_export]
 macro_rules! _fix_numeric {
     ($NAME:ident, $TAG:literal, $TY:tt) => {
         #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Default)]
@@ -437,6 +482,7 @@ macro_rules! _fix_numeric {
         $crate::_display!($NAME);
     };
 }
+
 #[macro_export]
 macro_rules! fix_usize {
     ($NAME:ident, $TAG:literal) => {

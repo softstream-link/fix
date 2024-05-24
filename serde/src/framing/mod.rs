@@ -41,6 +41,17 @@ pub fn find_frame_end(buf: &[u8]) -> Result<Option<usize>> {
         },
     }
 }
+/// Find the end of the frame by searching for the next BeginString tag=value pair.
+// will return index of the next BeginString tag=value pair if found None otherwises
+pub fn find_frame_end_with_begin_string_tag_value(buf: &[u8], begin_string_tag_value: &[u8]) -> Option<usize> {
+    for idx in begin_string_tag_value.len()..buf.len() - begin_string_tag_value.len() {
+        let chunk = &buf[idx..idx + begin_string_tag_value.len()];
+        if chunk == begin_string_tag_value {
+            return Some(idx);
+        }
+    }
+    None
+}
 
 pub fn split_off_check_sum<'a>(buf: &'a [u8]) -> Result<Parts> {
     let mut read = SliceRead::new(buf);
@@ -110,12 +121,13 @@ pub fn check_sum(buf: &[u8]) -> (u8, [u8; 3]) {
     let check_sum_u8 = (buf.iter().fold(0_usize, |acc, &b| acc.wrapping_add(b as usize)) % 256) as u8;
 
     use std::io::Write;
-    let mut check_sum_bytes = [0_u8; 3];
     let mut buf = itoa::Buffer::new();
-    let buf = buf.format(check_sum_u8);
-    write!(&mut check_sum_bytes[..], "{:0>3}", buf).unwrap();
+    let mut check_sum_bytes = [0_u8; 3];
+    let value = buf.format(check_sum_u8);
+    write!(&mut check_sum_bytes[..], "{:0>3}", value).unwrap();
     (check_sum_u8, check_sum_bytes)
 }
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -181,6 +193,23 @@ mod test {
         let err = find_frame_end(buf.as_bytes()).unwrap_err();
         info!("err: {:?}", err);
         assert!(matches!(err, Error::InvalidFixFrame(IssueAtPosition(10))));
+    }
+
+    #[test]
+    fn test_find_frame_end_with_begin_string_tag() {
+        setup::log::configure();
+        let buf = "8=fix9=535=A10=000"; // ONE FRAME EXACT
+        info!("buf: {:?}", buf.as_bytes().to_string());
+        let opt = find_frame_end_with_begin_string_tag_value(buf.as_bytes(), b"8=fix");
+        info!("opt: {:?}, len: {}", opt, buf.len());
+        assert!(opt.is_none());
+
+        let buf = "8=fix9=535=A10=0008=fix"; // ONE + 1/2 FRAME
+        info!("buf: {:?}", buf.as_bytes().to_string());
+        let idx = find_frame_end_with_begin_string_tag_value(buf.as_bytes(), b"8=fix").unwrap();
+        info!("idx: {}, len: {}", idx, buf.len());
+        info!("frame: {:?}", (&buf.as_bytes()[..idx]).to_string());
+        assert_eq!(idx, 22);
     }
 
     #[test]

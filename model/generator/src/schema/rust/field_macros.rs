@@ -440,7 +440,8 @@ macro_rules! _fix_numeric_fixed_length {
                     let value = buf.format(self.0);
                     use std::io::Write;
                     let mut buf_pad = [0u8; $LEN];
-                    write!(&mut buf_pad[..], concat!("{:0>", stringify!($LEN), "}"), value).unwrap();
+                    write!(&mut buf_pad[..], concat!("{:0>", stringify!($LEN), "}"), value)
+                        .expect(concat!("Failed serialize ", stringify!($NAME), "(" , stringify!($TY), ")", " into a buffer of size ", stringify!($LEN)));
                     serializer.serialize_bytes(&buf_pad)
                 }
             }
@@ -464,6 +465,13 @@ macro_rules! fix_usize_fixed_length {
     };
 }
 pub use fix_usize_fixed_length;
+#[macro_export]
+macro_rules! fix_u8_fixed_length {
+    ($NAME:ident, $TAG:literal) => {
+        $crate::_fix_numeric_fixed_length!($NAME, $TAG, u8, 3);
+    };
+}
+pub use fix_u8_fixed_length;
 
 #[macro_export]
 macro_rules! _fix_numeric {

@@ -116,16 +116,19 @@ impl QFModel {
                 },
             });
 
-            self.header_def.parts.iter().for_each(|f| {
-                self.msg_defs.defs.push(QFMessageDef {
-                    name: "TagValueHeader".to_owned() + &f.name(),
-                    msg_type: "N/A".to_string(),
-                    msg_cat: "header".to_string(),
-                    parts: Some(vec![QFMessagePart::FieldRef(QFFieldRef {
-                        name: f.name().to_owned(),
-                        required: "Y".to_string(),
-                    })]),
-                });
+            self.header_def.parts.iter().for_each(|part| match part {
+                QFMessagePart::FieldRef(_) | QFMessagePart::ComponentRef(_) => {
+                    self.msg_defs.defs.push(QFMessageDef {
+                        name: "TagValueHeader".to_owned() + &part.name(),
+                        msg_type: "N/A".to_string(),
+                        msg_cat: "header".to_string(),
+                        parts: Some(vec![QFMessagePart::FieldRef(QFFieldRef {
+                            name: part.name().to_owned(),
+                            required: "Y".to_string(),
+                        })]),
+                    });
+                }
+                _ => {} // TODO TagValue structs for header groups or other groups are not created at the moment
             });
         }
         // add trailer to messages so that thier rust structs are created

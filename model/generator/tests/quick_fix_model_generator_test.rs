@@ -118,7 +118,7 @@ fn test_root_44_msgs() {
 
     let rf = RFModel::from(&qf);
     for error in rf.errors() {
-        warn!("error: {}", error);
+        log::error!("{}", error);
     }
     assert_eq!(rf.errors().len(), 0);
     let fields_code = rf.fld_defs_to_code();

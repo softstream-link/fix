@@ -161,7 +161,7 @@ impl From<(&QFMessageDef, &QFModel)> for RFMessageDef {
             .map(|qf_msg_parts| {
                 match qf_msg_parts {
                     QFMessagePart::FieldRef(qf_fld_ref) => {
-                        match qf_fld_ref_2_r_msg_member_plain_or_data(qf_fld_ref, qf_model) {
+                        match qf_fld_ref_2_r_msg_member_plain_or_data(&qf_msg_def.name, qf_fld_ref, qf_model) {
                             // returns Some member for eitehr plain field or len field of the data pairs
                             Ok(Some(member)) => vec![member],
                             // data field is returned as none because is already mapped by len field from the len/data pair
@@ -216,7 +216,7 @@ impl From<(&QFMessageDef, &QFModel)> for RFMessageDef {
     }
 }
 
-pub fn qf_fld_ref_2_r_msg_member_plain_or_data(qf_fld_ref: &QFFieldRef, qf_model: &QFModel) -> Result<Option<RMessageMember>, Error> {
+pub fn qf_fld_ref_2_r_msg_member_plain_or_data(msg_name: &str, qf_fld_ref: &QFFieldRef, qf_model: &QFModel) -> Result<Option<RMessageMember>, Error> {
     let qf_fld_def = qf_model.fld_def(qf_fld_ref).unwrap();
 
     // plain
@@ -249,7 +249,7 @@ pub fn qf_fld_ref_2_r_msg_member_plain_or_data(qf_fld_ref: &QFFieldRef, qf_model
         Ok(None)
     } else {
         Err(Error::QuickFixMessageMissingPart {
-            msg: "Field".to_owned(),
+            msg: msg_name.to_owned(),
             name: qf_fld_ref.name.clone(),
         })
     }
@@ -263,7 +263,7 @@ fn qf_cmp_ref_2_r_msg_members(msg_name_log: &str, qf_cmp_ref: &QFComponentRef, q
             for part in parts {
                 match part {
                     QFCompomentPart::FieldRef(qf_fld_ref) => {
-                        match qf_fld_ref_2_r_msg_member_plain_or_data(qf_fld_ref, qf_model)? {
+                        match qf_fld_ref_2_r_msg_member_plain_or_data(msg_name_log, qf_fld_ref, qf_model)? {
                             Some(member) => members.push(member),
                             None => (), // data is already mapped via len
                         };

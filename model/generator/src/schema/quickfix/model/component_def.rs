@@ -161,7 +161,7 @@ impl From<(&QFComponentDef, &QFModel)> for RMessageMembers {
         for part in &qf_cmp_def.parts {
             match part {
                 QFCompomentPart::FieldRef(fld_ref) => {
-                    let member = qf_fld_ref_2_r_msg_member_plain_or_data(fld_ref, qf_model);
+                    let member = qf_fld_ref_2_r_msg_member_plain_or_data(&qf_cmp_def.name, fld_ref, qf_model);
                     match member {
                         Ok(Some(member)) => members.push(member),
                         Ok(None) => (),

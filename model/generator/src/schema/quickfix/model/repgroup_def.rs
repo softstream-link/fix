@@ -132,7 +132,7 @@ impl From<(&QFRepGroupDef<'_>, &QFModel)> for RRepGrpMessageDef {
             .map(|p| match p {
                 // nested <component_def/single_group_def/field_ref>
                 QFGroupPart::FieldRef(qf_fld_ref) => {
-                    match qf_fld_ref_2_r_msg_member_plain_or_data(qf_fld_ref, qf_model) {
+                    match qf_fld_ref_2_r_msg_member_plain_or_data(&qf_rep_grp_def.rep_grp_name, qf_fld_ref, qf_model) {
                         // returns Some member for eitehr plain field or len field of the data pairs
                         Ok(Some(member)) => vec![member],
                         // data field is returned as none because is already mapped by len field from the len/data pair

@@ -2,7 +2,9 @@ use fix_model_core::{
     prelude::{asc, Ascii},
     types::{asciichar::aschar, dat::dat, data::Data},
 };
-use fix_model_generator::{fix_usize_fixed_length, prelude::{fix_ascii_char_enum, fix_bool, fix_char_any, fix_data, fix_string, fix_usize}};
+use fix_model_generator::{
+    fix_u8_fixed_length, fix_usize_fixed_length, prelude::{fix_ascii_char_enum, fix_bool, fix_char_any, fix_data, fix_string, fix_usize}
+};
 use fix_model_test::unittest::setup;
 use fix_serde::unittest::{from_slice_unittest, to_bytes_unittest};
 use log::info;
@@ -25,9 +27,6 @@ fn test_data_dat_codec_dat() {
     let _inp = RawData::new(Data::from_vec(vec![1, 2]));
     let _inp: RawData<Data> = vec![1, 2].into();
     let _inp: RawData<Data> = b"BIN".into();
-
-    info!("RawData::<&dat>::default: '{}'", RawData::<&dat>::default());
-    info!("RawData::<Data>::default: '{}'", RawData::<Data>::default());
 
     let inp = RawData::new(Data::from_slice(b"\x00BIN"));
 
@@ -250,6 +249,21 @@ fn test_char_enum() {
     assert_eq!(jsn_out, fix_out);
 }
 
+
+#[test]
+fn test_fix_u8_fixed_len() {
+    setup::log::configure();
+
+    // usize::MAX 18446744073709551615 len 20
+    fix_u8_fixed_length!(CheckSum, 10);
+    let _inp = CheckSum::new(2);
+    let inp: CheckSum = 2.into();
+
+    let fix_ser = to_bytes_unittest(&inp).unwrap();
+    info!("fix_ser: {}", fix_ser);
+    let jsn_ser = to_string(&inp).unwrap();
+    info!("jsn_ser: {}", jsn_ser);
+}
 #[test]
 fn test_fix_usize_fixed_len() {
     setup::log::configure();

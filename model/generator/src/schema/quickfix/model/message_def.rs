@@ -254,6 +254,7 @@ fn qf_cmp_ref_2_r_msg_members(msg_name_log: &str, qf_cmp_ref: &QFComponentRef, q
 
     for part in &qf_cmp_def.parts {
         match part {
+            #[allow(clippy::single_match)]
             QFCompomentPart::FieldRef(qf_fld_ref) => {
                 match qf_fld_ref_2_r_msg_member_plain_or_data(msg_name_log, qf_fld_ref, qf_model)? {
                     Some(member) => members.push(member),

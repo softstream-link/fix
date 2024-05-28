@@ -131,6 +131,7 @@ impl From<(&RFMessageDef, &RFModel)> for MessageTokenParts {
 
         let mut msg_impls = quote!();
         msg_impls.extend(quote!(
+            #[automatically_derived]
             impl #generic_names std::default::Default for #name #generic_names where #default_trait_bounds {
                fn default() -> Self {
                     Self {
@@ -142,6 +143,7 @@ impl From<(&RFMessageDef, &RFModel)> for MessageTokenParts {
 
         msg_impls.extend(quote!(
             #[allow(unused_imports)]
+            #[automatically_derived]
             impl #generic_names serde::Serialize for #name #generic_names where #serialize_trait_bounds  {
                 fn serialize<__S: serde::Serializer>(&self, __serializer: __S,) -> serde::__private::Result<__S::Ok, __S::Error>{
                     if __serializer.is_human_readable() {

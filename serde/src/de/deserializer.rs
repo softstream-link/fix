@@ -36,7 +36,7 @@ impl<'de, 'any, R: Read<'de> + 'any, X: Schema> de::MapAccess<'de> for GreedyMap
         #[cfg(debug_assertions)]
         assert_eq!(
             NAME_GREEDY_MAPACESS,
-            std::any::type_name::<Self>().split("<").next().unwrap().split("::").last().unwrap(),
+            std::any::type_name::<Self>().split('<').next().unwrap().split("::").last().unwrap(),
             "Forgot to rename NAME_TAG_VALUE_MAPACESS after refactoring"
         );
 
@@ -87,7 +87,7 @@ impl<'a, R, S> LazyMapAccess<'a, R, S> {
         #[cfg(debug_assertions)]
         assert_eq!(
             NAME_LAZY_MAPACCESS,
-            type_name::<Self>().split("<").next().unwrap().split("::").last().unwrap(),
+            type_name::<Self>().split('<').next().unwrap().split("::").last().unwrap(),
             "Forgot to rename NAME_MAPACESS after refactoring"
         );
 
@@ -101,7 +101,7 @@ impl<'de, 'a, R: Read<'de> + 'a, S: Schema> de::MapAccess<'de> for LazyMapAccess
         {
             assert_eq!(
                 NAME_LAZY_MAPACCESS,
-                type_name::<Self>().split("<").next().unwrap().split("::").last().unwrap(),
+                type_name::<Self>().split('<').next().unwrap().split("::").last().unwrap(),
                 "Forgot to rename NAME_MAPACESS after refactoring"
             );
         }
@@ -109,7 +109,7 @@ impl<'de, 'a, R: Read<'de> + 'a, S: Schema> de::MapAccess<'de> for LazyMapAccess
         match self.deserializer.read.peek_tag()? {
             // not EndOfFile
             Some(peeked_tag) => {
-                let peeked_tag_idx = self.fields.iter().find(|tag| if tag.as_bytes() == peeked_tag { true } else { false }); // TODO does this need to do a binary search?
+                let peeked_tag_idx = self.fields.iter().find(|tag| tag.as_bytes() == peeked_tag); // TODO does this need to do a binary search?
 
                 #[cfg(debug_assertions)]
                 log::trace!(
@@ -259,7 +259,7 @@ impl<'de, 'a, R: Read<'de>, X: Schema> de::Deserializer<'de> for &'a mut Deseria
     fn deserialize_seq<V: de::Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
         #[cfg(debug_assertions)]
         {
-            let last_peeked_tag = self.read.last_peeked_tag().map_or("None".to_owned(), |v| format!("{}", v.to_string()));
+            let last_peeked_tag = self.read.last_peeked_tag().map_or("None".to_owned(), |v| v.to_string());
             log::trace!(
                 "{:<50} last_peeked_tag: {},  self.read: {}",
                 format!("{}::deserialize_seq", NAME_DESERIALIZER),
@@ -277,13 +277,13 @@ impl<'de, 'a, R: Read<'de>, X: Schema> de::Deserializer<'de> for &'a mut Deseria
                     match (self.read.parse_tag()?, tag_data) {
                         (Some(actual_tag), expected_tag) if actual_tag == expected_tag => {
                             let data = self.read.parse_value_with_length(data_len)?;
-                            visitor.visit_borrowed_bytes(&data) // TODO is this correct/ or should call visit_bytes?
+                            visitor.visit_borrowed_bytes(data) // TODO is this correct/ or should call visit_bytes?
                         }
                         (actual_tag, expected_tag) => Err(Error::Message(format!(
                             "{}::deserialize_seq: Expected to parse tag: '{}', instead found tag: '{}' ",
                             NAME_DESERIALIZER,
                             expected_tag.to_string(),
-                            actual_tag.map_or("None".to_owned(), |v| format!("{}", v.to_string()))
+                            actual_tag.map_or("None".to_owned(), |v| v.to_string())
                         ))),
                     }
                 }

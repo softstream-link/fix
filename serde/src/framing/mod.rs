@@ -139,8 +139,8 @@ pub fn find_frame_end(buf: &[u8]) -> Result<Option<usize>> {
             Some(_begin_string) => match read.parse_tag_infallable() {
                 None => Ok(None), // frame incomplete
                 Some(_body_len_tag) => match read.parse_value_infallable() {
-                    None => Ok(None),                                                                        // frame incomplete
-                    Some(body_len) if body_len.is_empty() => Err(Error::InvalidFixFrame(read.idx().into())), // frame invalid
+                    None => Ok(None),                                           // frame incomplete
+                    Some([]) => Err(Error::InvalidFixFrame(read.idx().into())), // frame invalid // empty slice
                     Some(body_len) => {
                         let body_len = match SliceRead::parse_number::<usize>(body_len) {
                             Ok(body_len) => body_len,

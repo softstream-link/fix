@@ -99,7 +99,7 @@ impl RFModel {
         let rep_grp_msg = &self.rep_grp_defs[self
             .rep_grp_defs
             .binary_search_by(|g| g.0.name.cmp(&rep_grp.name))
-            .expect(format!("Missing repeading group definition for {:?}", rep_grp).as_str())];
+            .unwrap_or_else(|_| panic!("Missing repeading group definition for {:?}", rep_grp))];
         rep_grp_msg.0.default_trait_bounds(self)
     }
     pub fn repgrp_to_code(&self) -> (String, String) {
@@ -145,8 +145,8 @@ impl RFModel {
     pub fn errors(&self) -> Vec<Error> {
         let mut errors = vec![];
         errors.extend(self.errors.clone());
-        errors.extend(self.msg_defs.iter().map(|m| &m.errors).flatten().cloned());
-        errors.extend(self.rep_grp_defs.iter().map(|g| &g.0.errors).flatten().cloned());
+        errors.extend(self.msg_defs.iter().flat_map(|m| &m.errors).cloned());
+        errors.extend(self.rep_grp_defs.iter().flat_map(|g| &g.0.errors).cloned());
         errors
     }
 
@@ -154,12 +154,10 @@ impl RFModel {
         let tags = self
             .fld_defs
             .iter()
-            .map(|f| match f {
+            .filter_map(|f| match f {
                 RFldDef::Data(d) => Some(d),
                 _ => None,
             })
-            .filter(|f| f.is_some())
-            .map(|f| f.unwrap())
             .collect::<Vec<_>>();
         let mut entries = tags
             .iter()
@@ -171,10 +169,9 @@ impl RFModel {
             })
             .collect::<Vec<_>>();
         entries.sort();
-        let idx = IndexDef {
+        IndexDef {
             name: self.name.clone(),
             entries,
-        };
-        idx
+        }
     }
 }

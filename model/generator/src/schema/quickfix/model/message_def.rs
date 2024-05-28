@@ -29,7 +29,7 @@ impl QFMessageDefs {
         &self.defs
     }
     pub fn extract_rep_grp_defs(&self) -> Vec<QFRepGroupDef> {
-        self.defs.iter().map(|msg_def| msg_def.extract_rep_grp_defs()).flatten().collect()
+        self.defs.iter().flat_map(|msg_def| msg_def.extract_rep_grp_defs()).collect()
     }
 }
 
@@ -49,10 +49,7 @@ pub struct QFMessageDef {
 impl QFMessageDef {
     pub fn parts(&self) -> Vec<QFMessagePart> {
         match &self.parts {
-            Some(atrb) => {
-                let x = atrb.to_vec();
-                x
-            }
+            Some(atrb) => atrb.to_vec(),
             None => Vec::new(),
         }
     }
@@ -87,12 +84,9 @@ impl QFMessageDef {
         match &self.parts {
             Some(parts) => {
                 for part in parts {
-                    match part {
-                        QFMessagePart::GroupDef(grp_def) => {
-                            let rep_grp_name = self.name.to_owned() + &msg_embeded_group_name_to_rep_grp_name(&grp_def.name);
-                            rep_grp_defs.extend(QFGroupDef::extract_rep_grp_defs(grp_def, rep_grp_name));
-                        }
-                        _ => {}
+                    if let QFMessagePart::GroupDef(grp_def) = part {
+                        let rep_grp_name = self.name.to_owned() + &msg_embeded_group_name_to_rep_grp_name(&grp_def.name);
+                        rep_grp_defs.extend(QFGroupDef::extract_rep_grp_defs(grp_def, rep_grp_name));
                     }
                 }
             }
@@ -158,7 +152,7 @@ impl From<(&QFMessageDef, &QFModel)> for RFMessageDef {
         let members = qf_msg_def
             .parts()
             .iter()
-            .map(|qf_msg_parts| {
+            .flat_map(|qf_msg_parts| {
                 match qf_msg_parts {
                     QFMessagePart::FieldRef(qf_fld_ref) => {
                         match qf_fld_ref_2_r_msg_member_plain_or_data(&qf_msg_def.name, qf_fld_ref, qf_model) {
@@ -192,7 +186,7 @@ impl From<(&QFMessageDef, &QFModel)> for RFMessageDef {
                             member: RFldDef::RepGroup(RFldDefRepGroup {
                                 name: qf_msg_def.name.to_owned() + &msg_embeded_group_name_to_rep_grp_name(&grp_def.name),
                                 tag: qf_fld_def.number.parse().unwrap(),
-                                generic_info: generic_info,
+                                generic_info,
                             }),
                             required: grp_def.required == "Y", // note that we use grp required flag
                         };
@@ -202,7 +196,6 @@ impl From<(&QFMessageDef, &QFModel)> for RFMessageDef {
                     }
                 }
             })
-            .flatten()
             .collect::<Vec<_>>();
         let xml = quick_xml::se::to_string(qf_msg_def).unwrap();
         Self {
@@ -258,36 +251,33 @@ pub fn qf_fld_ref_2_r_msg_member_plain_or_data(msg_name: &str, qf_fld_ref: &QFFi
 fn qf_cmp_ref_2_r_msg_members(msg_name_log: &str, qf_cmp_ref: &QFComponentRef, qf_model: &QFModel) -> Result<Vec<RMessageMember>, Error> {
     let qf_cmp_def = qf_model.cmp_def(qf_cmp_ref).unwrap();
     let mut members = vec![];
-    match qf_cmp_def {
-        QFComponentDef { parts, .. } => {
-            for part in parts {
-                match part {
-                    QFCompomentPart::FieldRef(qf_fld_ref) => {
-                        match qf_fld_ref_2_r_msg_member_plain_or_data(msg_name_log, qf_fld_ref, qf_model)? {
-                            Some(member) => members.push(member),
-                            None => (), // data is already mapped via len
-                        };
-                    }
-                    QFCompomentPart::GroupDef(grp_def) => {
-                        let generic_info = qf_model.grp_def_generic_types(grp_def);
-                        let qf_fld_def = qf_model.fld_def(&grp_def.as_field_ref()).unwrap();
-                        let member = RMessageMember {
-                            member: RFldDef::RepGroup(RFldDefRepGroup {
-                                name: qf_cmp_ref.name.clone(),
-                                tag: qf_fld_def.number.parse().unwrap(),
-                                generic_info: generic_info,
-                            }),
-                            required: qf_cmp_ref.required == "Y", // note that we use comp required flag
-                        };
-                        members.push(member);
-                    }
-                    QFCompomentPart::ComponentRef(qf_cmp_ref) => {
-                        // recursive
-                        members.extend(qf_cmp_ref_2_r_msg_members(msg_name_log, qf_cmp_ref, qf_model)?)
-                    }
-                }
+
+    for part in &qf_cmp_def.parts {
+        match part {
+            QFCompomentPart::FieldRef(qf_fld_ref) => {
+                match qf_fld_ref_2_r_msg_member_plain_or_data(msg_name_log, qf_fld_ref, qf_model)? {
+                    Some(member) => members.push(member),
+                    None => (), // data is already mapped via len
+                };
             }
-            Ok(members)
+            QFCompomentPart::GroupDef(grp_def) => {
+                let generic_info = qf_model.grp_def_generic_types(grp_def);
+                let qf_fld_def = qf_model.fld_def(&grp_def.as_field_ref()).unwrap();
+                let member = RMessageMember {
+                    member: RFldDef::RepGroup(RFldDefRepGroup {
+                        name: qf_cmp_ref.name.clone(),
+                        tag: qf_fld_def.number.parse().unwrap(),
+                        generic_info,
+                    }),
+                    required: qf_cmp_ref.required == "Y", // note that we use comp required flag
+                };
+                members.push(member);
+            }
+            QFCompomentPart::ComponentRef(qf_cmp_ref) => {
+                // recursive
+                members.extend(qf_cmp_ref_2_r_msg_members(msg_name_log, qf_cmp_ref, qf_model)?)
+            }
         }
     }
+    Ok(members)
 }

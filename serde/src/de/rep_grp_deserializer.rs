@@ -17,7 +17,7 @@ impl<'a, R, S> RepeatingGroupMapAccess<'a, R, S> {
         #[cfg(debug_assertions)]
         assert_eq!(
             NAME_REP_GROUP_MAPACCESS,
-            type_name::<Self>().split("<").next().unwrap().split("::").last().unwrap(),
+            type_name::<Self>().split('<').next().unwrap().split("::").last().unwrap(),
             "Forgot to rename NAME_MAPACESS after refactoring"
         );
 

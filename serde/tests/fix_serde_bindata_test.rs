@@ -93,7 +93,7 @@ fn test_data_and_dat() {
 
         let out_json_dat: Msg<&dat> = serde_json::from_str(&json_ser_dat).unwrap();
         info!("out_json_dat: {}", out_json_dat);
-        assert_eq!(imp_msg_dat.data.as_slice(), out_json_dat.data.from_base64().unwrap());
+        assert_eq!(imp_msg_dat.data.as_slice(), out_json_dat.data.decode_base64().unwrap());
     }
 
     {

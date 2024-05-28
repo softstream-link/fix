@@ -13,6 +13,7 @@ impl aschar {
         self.0
     }
     #[inline]
+    /// Caller must ensure that the input u8 is valid ascii
     pub unsafe fn from_u8_unchecked(c: u8) -> Self {
         Self(c)
     }

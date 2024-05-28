@@ -154,15 +154,7 @@ impl TryFrom<&QFFieldDef> for RFldDefPlain {
         } else if qf_field_def.is_bool() {
             RFldPlainType::Bool
         } else if qf_field_def.is_ascii_char_enum() {
-            RFldPlainType::AsciiCharEnum(
-                qf_field_def
-                    .variants
-                    .as_ref()
-                    .unwrap()
-                    .iter()
-                    .map(|var| RAsciiCharVariant::from(var))
-                    .collect(),
-            )
+            RFldPlainType::AsciiCharEnum(qf_field_def.variants.as_ref().unwrap().iter().map(RAsciiCharVariant::from).collect())
         } else {
             return Err(Error::QuickFixFieldTypeNotMapped(format!(
                 "name: {}, type: {}",
@@ -171,13 +163,12 @@ impl TryFrom<&QFFieldDef> for RFldDefPlain {
         };
         Ok(Self {
             name: qf_field_def.name.clone(),
-            tag: qf_field_def.number.parse().expect(
-                format!(
+            tag: qf_field_def.number.parse().unwrap_or_else(|_| {
+                panic!(
                     "quickfix definion of field 'number' is not valid, expected usize. value: {:?}",
                     qf_field_def
                 )
-                .as_str(),
-            ),
+            }),
             new_type: field_type,
             fix_type: qf_field_def.r#type.clone(),
         })

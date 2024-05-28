@@ -36,7 +36,7 @@ impl<S: Serialize + AsRef<str>, X: Schema> SendFrame<S, X> {
         value.serialize(&mut self.serializer_body)
     }
     pub fn complete(mut self, calc_check_sum: bool) -> Result<Serializer<BytesWrite, X>> {
-        self.header1.body_length = BodyLength(self.serializer_body.len().into());
+        self.header1.body_length = BodyLength(self.serializer_body.len());
         self.header1.serialize(&mut self.serializer_header)?;
         self.header2.serialize(&mut self.serializer_header)?;
 

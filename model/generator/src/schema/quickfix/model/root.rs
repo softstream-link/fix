@@ -272,7 +272,7 @@ impl QFModel {
     }
 
     pub fn message_defs(&self) -> &Vec<QFMessageDef> {
-        &self.msg_defs.get()
+        self.msg_defs.get()
     }
     pub fn details<F: Fn(&QFMessageDef) -> bool>(&self, filter: F) -> Result<String, String> {
         let msgs = self.message_defs().iter().filter(|m| filter(m)).collect::<Vec<_>>();
@@ -331,11 +331,11 @@ impl From<&QFModel> for RFModel {
                 let len_id = len
                     .number
                     .parse()
-                    .expect(format!("quickfix definion of field 'number' is not valid, expected usize. value: {:?}", len).as_str());
+                    .unwrap_or_else(|_| panic!("quickfix definion of field 'number' is not valid, expected usize. value: {:?}", len));
                 let data_id = data
                     .number
                     .parse()
-                    .expect(format!("quickfix definion of field 'number' is not valid, expected usize. value: {:?}", data).as_str());
+                    .unwrap_or_else(|_| panic!("quickfix definion of field 'number' is not valid, expected usize. value: {:?}", data));
                 RFldDefData {
                     len_name: len.name.clone(),
                     len_tag: len_id,

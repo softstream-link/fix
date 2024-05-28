@@ -38,10 +38,9 @@ impl ToTokens for IndexEntry {
 }
 impl IndexEntry {
     fn get_len_tag_as_string(&self) -> String {
-        let tag_as_string = match self {
+        match self {
             IndexEntry::Data { len_tag, .. } => len_tag.to_string(),
-        };
-        tag_as_string
+        }
     }
 }
 impl Ord for IndexEntry {

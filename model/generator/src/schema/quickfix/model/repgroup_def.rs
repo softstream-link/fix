@@ -87,13 +87,18 @@ impl QFGroupDef {
         });
 
         for part in &self.parts {
-            match part {
-                QFGroupPart::GroupDef(grp_def) => {
-                    let rep_grp_name = rep_grp_name.to_owned() + &msg_embeded_group_name_to_rep_grp_name(&grp_def.name);
-                    rep_grp_defs.extend(QFGroupDef::extract_rep_grp_defs(grp_def, rep_grp_name));
-                }
-                _ => {}
+            if let QFGroupPart::GroupDef(grp_def) = part {
+                let rep_grp_name = rep_grp_name.to_owned() + &msg_embeded_group_name_to_rep_grp_name(&grp_def.name);
+                rep_grp_defs.extend(QFGroupDef::extract_rep_grp_defs(grp_def, rep_grp_name));
             }
+
+            // match part {
+            //     QFGroupPart::GroupDef(grp_def) => {
+            //         let rep_grp_name = rep_grp_name.to_owned() + &msg_embeded_group_name_to_rep_grp_name(&grp_def.name);
+            //         rep_grp_defs.extend(QFGroupDef::extract_rep_grp_defs(grp_def, rep_grp_name));
+            //     }
+            //     _ => {}
+            // }
         }
         rep_grp_defs
     }
@@ -129,7 +134,7 @@ impl From<(&QFRepGroupDef<'_>, &QFModel)> for RRepGrpMessageDef {
             .grp_def
             .parts
             .iter()
-            .map(|p| match p {
+            .flat_map(|p| match p {
                 // nested <component_def/single_group_def/field_ref>
                 QFGroupPart::FieldRef(qf_fld_ref) => {
                     match qf_fld_ref_2_r_msg_member_plain_or_data(&qf_rep_grp_def.rep_grp_name, qf_fld_ref, qf_model) {
@@ -157,7 +162,7 @@ impl From<(&QFRepGroupDef<'_>, &QFModel)> for RRepGrpMessageDef {
                         member: RFldDef::RepGroup(RFldDefRepGroup {
                             name: qf_rep_grp_def.rep_grp_name.to_owned() + &msg_embeded_group_name_to_rep_grp_name(&grp_def.name),
                             tag: qf_fld_def.number.parse().unwrap(),
-                            generic_info: generic_info,
+                            generic_info,
                         }),
                         required: grp_def.required == "Y", // note that we use grp required flag
                     };
@@ -165,7 +170,6 @@ impl From<(&QFRepGroupDef<'_>, &QFModel)> for RRepGrpMessageDef {
                     // panic!("QFComponentDef/SingleGroupDef/SubGroupDef is not supported {}", xml);
                 }
             })
-            .flatten()
             .collect::<Vec<_>>();
 
         RRepGrpMessageDef(RFMessageDef {

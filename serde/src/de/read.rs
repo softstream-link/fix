@@ -195,7 +195,7 @@ impl<'origin> Debug for SliceRead<'origin> {
 impl<'origin> Read<'origin> for SliceRead<'origin> {
     #[inline]
     fn is_end(&mut self) -> Result<bool> {
-        Ok(if self.idx_current < self.slice.len() { false } else { true })
+        Ok(self.idx_current >= self.slice.len()) // slice.len() is already past the last readable index hence if they are equal we are past the last byte
     }
 
     #[inline]

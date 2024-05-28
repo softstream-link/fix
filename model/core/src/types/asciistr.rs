@@ -53,7 +53,7 @@ impl TryFrom<&[u8]> for &asc {
     fn try_from(val: &[u8]) -> Result<Self> {
         is_ascii(val)?;
 
-        let ptr: &[u8] = val.as_ref();
+        let ptr: &[u8] = val;
         let ptr: *const [u8] = ptr as *const [u8];
         let ptr: *const asc = ptr as *const asc;
         Ok(unsafe { &*ptr })

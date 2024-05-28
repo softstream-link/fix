@@ -21,8 +21,8 @@ impl<'a> dat_codec<'a> {
     }
     pub fn decode(&mut self) -> Result<(), Error> {
         match &self.0 {
-            MaybeAllocated::Borrowed { slice, base64 } if *base64 == true => {
-                let v = slice.from_base64().map_err(|e| Error::NotBase64String(e.to_string()))?;
+            MaybeAllocated::Borrowed { slice, base64 } if *base64  => {
+                let v = slice.decode_base64().map_err(|e| Error::NotBase64String(e.to_string()))?;
                 self.0 = MaybeAllocated::Allocated(v);
                 Ok(())
             }
@@ -47,7 +47,7 @@ impl Deref for dat_codec<'_> {
     type Target = dat;
     #[inline]
     fn deref(&self) -> &Self::Target {
-        &self.as_dat()
+        self.as_dat()
     }
 }
 impl PartialEq for dat_codec<'_> {
@@ -86,7 +86,7 @@ impl Default for dat_codec<'_> {
 impl Serialize for dat_codec<'_> {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
         if serializer.is_human_readable() {
-            self.as_slice().to_base64_string().serialize(serializer)
+            self.as_slice().encode_base64_string().serialize(serializer)
         } else {
             let mut seq = serializer.serialize_seq(Some(self.as_slice().len()))?;
             use serde::ser::SerializeSeq;

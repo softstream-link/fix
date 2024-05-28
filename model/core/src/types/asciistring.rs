@@ -140,7 +140,7 @@ impl Deref for Ascii {
     type Target = asc;
     #[inline]
     fn deref(&self) -> &Self::Target {
-        &Borrow::<asc>::borrow(self)
+        Borrow::<asc>::borrow(self)
     }
 }
 impl Display for Ascii {

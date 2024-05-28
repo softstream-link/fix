@@ -52,10 +52,9 @@ impl From<&str> for Data {
     }
 }
 impl std::fmt::Display for Data {
-    /// Display as base64 string
+    /// Display as string
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", self.as_dat().to_string())
-        // write!(f, "{}", self.as_dat().as_slice().to_base64_string())
+        write!(f, "{}", self.as_dat())
     }
 }
 impl std::fmt::Debug for Data {
@@ -68,7 +67,7 @@ impl Deref for Data {
     type Target = dat;
     #[inline]
     fn deref(&self) -> &Self::Target {
-        &Borrow::<dat>::borrow(self)
+        Borrow::<dat>::borrow(self)
     }
 }
 impl AsRef<dat> for Data {
@@ -99,7 +98,7 @@ impl<'de> Deserialize<'de> for Data {
                     formatter.write_str("a Data")
                 }
                 fn visit_borrowed_bytes<E: serde::de::Error>(self, base64_str: &[u8]) -> std::result::Result<Self::Value, E> {
-                    base64_str.from_base64().map(|v| Data(v)).map_err(serde::de::Error::custom)
+                    base64_str.decode_base64().map(Data).map_err(serde::de::Error::custom)
                 }
             }
             deserializer.deserialize_bytes(DataVisitor)

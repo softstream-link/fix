@@ -1,16 +1,130 @@
-pub mod send;
 pub mod recv;
-
+pub mod send;
 use crate::{
-    de::read::{Read, SliceRead},
+    de::read::SliceRead,
     prelude::{Error, Result},
 };
-use fix_model_core::types::display::FixByteSlice2Display;
+use serde::Serialize;
 
-#[derive(Debug)]
-pub struct Parts<'a> {
-    pub first: &'a [u8],
-    pub second: &'a [u8],
+fix_model_generator::fix_string!(BeginString, 8);
+fix_model_generator::fix_usize_fixed_length!(BodyLength, 9);
+fix_model_generator::fix_string!(MsgType, 35);
+fix_model_generator::fix_string!(SenderCompID, 49);
+fix_model_generator::fix_string!(TargetCompID, 56);
+
+fix_model_generator::fix_u8_fixed_length!(CheckSum, 10);
+
+#[derive(serde::Deserialize, Debug, PartialEq, Clone)]
+pub struct Header1EnvelopeSequence<S> {
+    #[serde(rename = "8")]
+    #[serde(alias = "BeginString")]
+    pub begin_string: BeginString<S>,
+
+    #[serde(rename = "9")]
+    #[serde(alias = "BodyLength")]
+    pub body_length: BodyLength,
+}
+impl<S: serde::Serialize> Serialize for Header1EnvelopeSequence<S> {
+    fn serialize<__S: serde::Serializer>(&self, serializer: __S) -> std::result::Result<__S::Ok, __S::Error> {
+        use serde::ser::SerializeStruct;
+        if serializer.is_human_readable() {
+            let mut state = serializer.serialize_struct("Header1EnvelopeSequence", 2)?;
+            state.serialize_field("BeginString", &self.begin_string)?;
+            state.serialize_field("BodyLength", &self.body_length)?;
+            state.end()
+        } else {
+            let mut state = serializer.serialize_struct("Header1EnvelopeSequence", 2)?;
+            state.serialize_field("8", &self.begin_string)?;
+            state.serialize_field("9", &self.body_length)?;
+            state.end()
+        }
+    }
+}
+impl<S: AsRef<str>> Header1EnvelopeSequence<S> {
+    pub fn new(begin_string: BeginString<S>) -> Self {
+        Self {
+            begin_string,
+            body_length: Default::default(),
+        }
+    }
+    #[allow(clippy::identity_op)]
+    pub fn size(&self) -> usize {
+        0
+        + b"8=".len() + self.begin_string.as_ref().as_bytes().len() + b"".len() // BeginString
+        + b"9=".len() + 20 + b"".len() // fix_usize_fixed_length!(BodyLength, 9); generates 20 zero padded string
+    }
+}
+
+#[derive(serde::Deserialize, Debug, PartialEq, Clone)]
+pub struct Header2TypeCompIdSequence<S> {
+    #[serde(rename = "35")]
+    #[serde(alias = "MsgType")]
+    pub msg_type: MsgType<S>,
+
+    #[serde(rename = "49")]
+    #[serde(alias = "SenderCompID")]
+    pub sender_comp_id: SenderCompID<S>,
+
+    #[serde(rename = "56")]
+    #[serde(alias = "TargetCompID")]
+    pub target_comp_id: TargetCompID<S>,
+}
+impl<S: serde::Serialize> Serialize for Header2TypeCompIdSequence<S> {
+    fn serialize<__S: serde::Serializer>(&self, serializer: __S) -> std::result::Result<__S::Ok, __S::Error> {
+        use serde::ser::SerializeStruct;
+        if serializer.is_human_readable() {
+            let mut state = serializer.serialize_struct("Header2TypeCompIdSequence", 3)?;
+            state.serialize_field("MsgType", &self.msg_type)?;
+            state.serialize_field("SenderCompID", &self.sender_comp_id)?;
+            state.serialize_field("TargetCompID", &self.target_comp_id)?;
+            state.end()
+        } else {
+            let mut state = serializer.serialize_struct("Header2TypeCompIdSequence", 3)?;
+            state.serialize_field("35", &self.msg_type)?;
+            state.serialize_field("49", &self.sender_comp_id)?;
+            state.serialize_field("56", &self.target_comp_id)?;
+            state.end()
+        }
+    }
+}
+impl<S: AsRef<str>> Header2TypeCompIdSequence<S> {
+    pub fn new(msg_type: MsgType<S>, sender_comp_id: SenderCompID<S>, target_comp_id: TargetCompID<S>) -> Self {
+        Self {
+            msg_type,
+            sender_comp_id,
+            target_comp_id,
+        }
+    }
+
+    #[allow(clippy::identity_op)]
+    pub fn size(&self) -> usize {
+        0
+        + b"35=".len() + self.msg_type.as_ref().as_bytes().len() + b"".len() // MsgType
+        + b"49=".len() + self.sender_comp_id.as_ref().as_bytes().len() + b"".len() // SenderCompID
+        + b"56=".len() + self.target_comp_id.as_ref().as_bytes().len() + b"".len()
+        // TargetCompID
+    }
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+pub(super) struct TrailerCheckSum {
+    #[serde(rename = "10")]
+    #[serde(alias = "CheckSum")]
+    check_sum: CheckSum,
+}
+impl TrailerCheckSum {
+    fn serialize<__S: serde::Serializer>(&self, serializer: __S) -> std::result::Result<__S::Ok, __S::Error> {
+        use serde::ser::SerializeStruct;
+        if serializer.is_human_readable() {
+            let mut state = serializer.serialize_struct("TrailerCheckSum", 1)?;
+            state.serialize_field("CheckSum", &self.check_sum)?;
+            state.end()
+        } else {
+            let mut state = serializer.serialize_struct("TrailerCheckSum", 1)?;
+            state.serialize_field("10", &self.check_sum)?;
+            state.end()
+        }
+    }
 }
 
 pub fn find_frame_end(buf: &[u8]) -> Result<Option<usize>> {
@@ -56,71 +170,7 @@ pub fn find_frame_end_with_begin_string_tag_value(buf: &[u8], begin_string_tag_v
     None
 }
 
-pub fn split_off_check_sum<'a>(buf: &'a [u8]) -> Result<Parts> {
-    let mut read = SliceRead::new(buf);
-    let _begin_string = match read.parse_tag_infallable() {
-        Some(b"8") => read.parse_value()?,
-        opt => {
-            #[cfg(debug_assertions)]
-            log::error!(
-                "Expected BeginString tag '8', instead got: {:?}, read: {}",
-                opt.unwrap_or_else(|| b"").to_string(),
-                read
-            );
-            return Err(Error::InvalidFixFrame(read.idx().into()));
-        }
-    };
-    let body_length: usize = match read.parse_tag_infallable() {
-        Some(b"9") => read.parse_value_as_number()?,
-        opt => {
-            #[cfg(debug_assertions)]
-            log::error!(
-                "Expected BodyLength tag '9', instead got: {:?}, read: {}",
-                opt.unwrap_or_else(|| b"").to_string(),
-                read
-            );
-            return Err(Error::InvalidFixFrame(read.idx().into()));
-        }
-    };
-    // 01234567890123456789
-    // 8=fix9=535=A10=000
-    // idx = 9 + body_length = 5 == 14 ... buf.len() can't be less then 14
-    let idx_body_end = read.idx() + body_length; // body_end includes SOH right before checksum
-    if idx_body_end > buf.len() {
-        #[cfg(debug_assertions)]
-        log::error!(
-            "BodyLength={} points idx_body_end: {} from current position, however its beyond slice length: {} read: {}",
-            body_length,
-            idx_body_end,
-            buf.len(),
-            read,
-        );
-
-        return Err(Error::InvalidFixFrame(read.idx().into()));
-    }
-    if buf[idx_body_end - 1] != crate::SOH {
-        #[cfg(debug_assertions)]
-        log::error!(
-            "Expected SOH at idx_body_end-1: {}, instead got: '{}' read: {}",
-            idx_body_end - 1,
-            (&buf[idx_body_end - 1..idx_body_end]).to_string(),
-            read
-        );
-        return Err(Error::InvalidFixFrame((idx_body_end - 1).into()));
-    }
-    let check_sum = &buf[idx_body_end..];
-    if check_sum.len() != 7 || &check_sum[..3] != b"10=" {
-        #[cfg(debug_assertions)]
-        log::error!("Expected CheckSum tag '10=xxx', instead got: '{}' read: {}", check_sum.to_string(), read);
-        return Err(Error::InvalidFixFrame((idx_body_end - 1).into()));
-    }
-    Ok(Parts {
-        first: &buf[..idx_body_end],
-        second: &buf[idx_body_end..],
-    })
-}
-
-pub fn check_sum(buf: &[u8]) -> u8 {
+pub fn compute_check_sum(buf: &[u8]) -> u8 {
     (buf.iter().fold(0_usize, |acc, &b| acc.wrapping_add(b as usize)) % 256) as u8
     // let check_sum_u8 = (buf.iter().fold(0_usize, |acc, &b| acc.wrapping_add(b as usize)) % 256) as u8;
     // use std::io::Write;
@@ -138,35 +188,6 @@ mod test {
     use fix_model_core::types::display::FixByteSlice2Display;
     use fix_model_test::unittest::setup;
     use log::info;
-
-    #[test]
-    fn test_split_off_check_sum() {
-        setup::log::configure();
-        let buf = "8=fix9=535=A10=000"; // VALID WITH TRAILER
-        let parts = split_off_check_sum(buf.as_bytes()).unwrap();
-        info!("parts.fist: {}", parts.first.to_string());
-        info!("parts.second: {}", parts.second.to_string());
-        assert_eq!(parts.first, "8=fix9=535=A".as_bytes());
-        assert_eq!(parts.second, "10=000".as_bytes());
-
-        //                 01234567890123456789
-        let buf = "8=fix9=535=A"; // INVALID NO CHECKSUM
-        let err = split_off_check_sum(buf.as_bytes()).unwrap_err();
-        info!("err: {:?}", err);
-        assert!(matches!(err, crate::prelude::Error::InvalidFixFrame(IssueAtPosition(14))));
-
-        //                 01234567890123456789
-        let buf = "8=fix9=535=A?"; // INVALID SOH TERMINATOR
-        let err = split_off_check_sum(buf.as_bytes()).unwrap_err();
-        info!("err: {:?}", err);
-        assert!(matches!(err, crate::prelude::Error::InvalidFixFrame(IssueAtPosition(14))));
-
-        //                 01234567890123456789
-        let buf = "8=fix9=535=A"; // INVALID FRAME TOO SHORT
-        let err = split_off_check_sum(buf.as_bytes()).unwrap_err();
-        info!("err: {:?}", err);
-        assert!(matches!(err, crate::prelude::Error::InvalidFixFrame(IssueAtPosition(10))));
-    }
 
     #[test]
     fn test_find_frame_end() {
@@ -220,13 +241,13 @@ mod test {
         setup::log::configure();
         let buf = "8=fix9=535=A"; // 10=080";
         info!("buf: {:?}", buf.as_bytes().to_string());
-        let csum = check_sum(buf.as_bytes());
+        let csum = compute_check_sum(buf.as_bytes());
         info!("csum: {}", csum);
         assert_eq!(csum, 80);
 
         let buf = "8=FIX.4.49=14835=D34=108049=TESTBUY152=20180920-18:14:19.50856=TESTSELL111=63673064027889863415=USD21=238=700040=154=155=MSFT60=20180920-18:14:19.492"; // 10=092";
         info!("buf: {}", buf.as_bytes().to_string());
-        let csum = check_sum(buf.as_bytes());
+        let csum = compute_check_sum(buf.as_bytes());
         info!("csum: {}", csum);
         assert_eq!(csum, 92);
     }

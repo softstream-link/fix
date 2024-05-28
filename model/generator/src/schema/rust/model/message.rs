@@ -109,15 +109,15 @@ impl From<(&RFMessageDef, &RFModel)> for MessageTokenParts {
             .collect::<Vec<_>>();
         let mut xml = r_msg_def
             .xml
-            .replace("><group", ">\n\t<group")
-            .replace("><field", ">\n\t<field")
-            .replace("><component", ">\n\t<component")
+            .replace("><group", ">\n    <group")
+            .replace("><field", ">\n    <field")
+            .replace("><component", ">\n    <component")
             .replace("</component>", "\n</component>")
             .replace("</message>", "\n</message>");
         if xml.starts_with("<group name=") {
             xml = xml.replace("</group>", "\n</group>");
         } else if xml.starts_with("<component name=") {
-            xml = xml.replace("</group>", "\n\t</group>");
+            xml = xml.replace("</group>", "\n    </group>");
         }
         let doc = format!("# Defition:\n```xml\n{}\n```", xml);
 
@@ -170,9 +170,14 @@ impl From<(&RFMessageDef, &RFModel)> for MessageTokenParts {
 
         match r_msg_def.msg_category {
             MessageCategory::Admin | MessageCategory::App => {
+                let is_app = matches!(r_msg_def.msg_category, MessageCategory::App);
                 msg_impls.extend(quote!(
-                    impl #generic_names fix_model_core::prelude::MsgType for #name #generic_names where #serialize_trait_bounds {
-                        const MSG_TYPE: &'static str = #msg_type;
+                    impl #generic_names fix_model_core::prelude::MsgTypeCode for #name #generic_names where #serialize_trait_bounds {
+                        const MSG_TYPE_CODE: &'static str = #msg_type;
+                        #[inline]
+                        fn is_app(&self) -> bool {
+                            #is_app
+                        }
                     }
                 ));
             }

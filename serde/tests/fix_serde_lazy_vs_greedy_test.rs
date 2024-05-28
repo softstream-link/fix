@@ -1,8 +1,5 @@
 use fix_model_test::unittest::setup;
-use fix_serde::{
-    new_deserializer, new_serializer_with_capacity,
-    unittest::{from_slice_unittest, to_bytes_unittest},
-};
+use fix_serde::{new_deserializer, new_serializer_with_capacity};
 use log::info;
 use serde::{Deserialize, Serialize};
 
@@ -78,22 +75,22 @@ struct LogonMsg {
 }
 
 #[test]
-fn test_greedy_tagged_and_header() -> Result<(), Box<dyn std::error::Error>> {
+fn test_lazy_vs_greedy() -> Result<(), Box<dyn std::error::Error>> {
     setup::log::configure_level(log::LevelFilter::Info);
-    let header = Header {
+    let header_inp = Header {
         begin_string: BeginString("FIX.4.4"),
         body_length: BodyLength(0),
         msg_type: MsgType("A"),
         sender_comp_id: OnBehalfOfCompID("source"),
         target_comp_id: DeliverToCompID("dest"),
     };
-    let body = LogonMsg {
-        encrypt_method: 0.into(),
+    let body_inp = LogonMsg {
+        encrypt_method: 1.into(),
         heart_bt_int: 30.into(),
     };
     let mut ser = new_serializer_with_capacity(1024);
-    header.serialize(&mut ser)?;
-    body.serialize(&mut ser)?;
+    header_inp.serialize(&mut ser)?;
+    body_inp.serialize(&mut ser)?;
 
     info!("ser: {:?}", ser);
     let mut des = new_deserializer(&ser);
@@ -129,18 +126,21 @@ fn test_greedy_tagged_and_header() -> Result<(), Box<dyn std::error::Error>> {
     des.end().unwrap_err();
 
     // body greedy
-    let body = LogonMsg::deserialize(&mut des)?;
-    info!("body: {:?}, des: {:?}", body, des);
+    let body_out = LogonMsg::deserialize(&mut des)?;
+    info!("body_out: {:?}, des: {:?}", body_out, des);
     des.end().unwrap();
+    assert_eq!(body_inp, body_out);
 
     // ////////////////////////////////////// HEADER
     let mut des = new_deserializer(&ser);
-    let header = Header::<&str>::deserialize(&mut des)?;
-    info!("header: {:?}, des: {:?}", header, des);
+    let header_out = Header::<&str>::deserialize(&mut des)?;
+    info!("header_out: {:?}, des: {:?}", header_out, des);
     des.end().unwrap_err();
+    assert_eq!(header_inp, header_out);
 
-    let body = LogonMsg::deserialize(&mut des)?;
-    info!("body: {:?}, des: {:?}", body, des);
+    let body_out = LogonMsg::deserialize(&mut des)?;
+    info!("body_out: {:?}, des: {:?}", body_out, des);
     des.end().unwrap();
+    assert_eq!(body_inp, body_out);
     Ok(())
 }

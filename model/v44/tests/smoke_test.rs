@@ -9,7 +9,7 @@ use log::info;
 fn test_tag_value_plain() {
     setup::log::configure_level(log::LevelFilter::Info);
 
-    let msg = TagValueAccount::<String> { account: "account".into() };
+    let msg = TagValueAccount::<String> { account: "account".to_owned().into() };
     info!("msg: {:?}", msg);
 
     let fix = fix_model_v44::to_fix(&msg, None).unwrap();
@@ -49,7 +49,7 @@ fn test_rep_grp() {
     setup::log::configure_level(log::LevelFilter::Info);
 
     let msg = AllocGrp::<String, char, Data> {
-        alloc_account: Some("alloc_account".into()),
+        alloc_account: Some("alloc_account".to_owned().into()),
         ..Default::default()
     };
     info!("msg: {:?}", msg);

@@ -1,7 +1,7 @@
 use bytes::BytesMut;
-use fix_model_core::types::fixmsgtype::MsgType;
+use fix_model_core::prelude::MsgTypeCode;
 use fix_model_test::unittest::setup;
-use fix_serde::prelude::SendFrame;
+use fix_serde::prelude::*;
 use fix_serde::unittest::UnitTestSchema;
 use log::info;
 use serde::{Deserialize, Serialize};
@@ -34,7 +34,7 @@ fix_model_generator::prelude::fix_usize!(HeartBtInt, 108);
 // <field name='NextExpectedMsgSeqNum' required='N' />
 // <field name='MaxMessageSize' required='N' />
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
-struct LogonMsg {
+struct Logon {
     // fields
     #[serde(rename = "98")]
     pub encrypt_method: EncryptMethod,
@@ -43,8 +43,14 @@ struct LogonMsg {
     #[serde(rename = "108")]
     pub heart_bt_int: HeartBtInt,
 }
-impl MsgType for LogonMsg {
-    const MSG_TYPE: &'static str = "A";
+impl MsgTypeCode for Logon {
+    const MSG_TYPE_CODE: &'static str = "A";
+    fn is_app(&self) -> bool {
+        true
+    }
+    fn is_adm(&self) -> bool {
+        true
+    }
 }
 
 // <field name='BeginString' required='Y' />
@@ -53,18 +59,42 @@ impl MsgType for LogonMsg {
 // <field name='SenderCompID' required='Y' />
 // <field name='TargetCompID' required='Y' />
 #[test]
-fn test_send_frame() {
-    setup::log::configure();
+fn test_send_recv_frame() {
+    setup::log::configure_level(log::LevelFilter::Info);
 
-    let msg = LogonMsg {
+    let logon_inp = Logon {
         encrypt_method: EncryptMethod(0),
         heart_bt_int: HeartBtInt(30),
     };
 
-    info!("msg: {:?}", msg);
-    let mut ser = SendFrame::with_capacity(1024, "FIX.4.4", msg.msg_type(), "source", "dest", UnitTestSchema);
-    msg.serialize(&mut *ser).unwrap();
-    // msg.serialize(ser.deref_mut()).unwrap();
-    let ser = ser.envelope(true).unwrap();
+    info!("logon_inp: {:?}", logon_inp);
+
+    let header1 = Header1EnvelopeSequence::new("FIX.4.4".into());
+    let header2 = Header2TypeCompIdSequence::new(logon_inp.msg_type().into(), "source".into(), "dest".into());
+    let mut send_frame = SendFrame::with_capacity(1024, header1, header2, UnitTestSchema);
+    send_frame.serialize(&logon_inp).unwrap();
+    let ser = send_frame.complete(true).unwrap();
     info!("ser: {:?}", ser);
+
+
+    let mut recv_frame = RecvFrame::new(&ser, UnitTestSchema);
+    recv_frame.check_sum().unwrap();
+    let header1 = recv_frame.deserialize::<Header1EnvelopeSequence<&str>>().unwrap();
+    info!("header1: {:?}", header1);
+    assert_eq!(header1.begin_string, "FIX.4.4".into());
+    assert_eq!(header1.body_length, 12.into());
+    recv_frame.complete().unwrap_err();
+
+    let header2 = recv_frame.deserialize::<Header2TypeCompIdSequence<&str>>().unwrap();
+    info!("header2: {:?}", header2);
+    assert_eq!(header2.msg_type, "A".into());
+    assert_eq!(header2.sender_comp_id, "source".into());
+    assert_eq!(header2.target_comp_id, "dest".into());
+    recv_frame.complete().unwrap_err();
+
+    let logon_out = recv_frame.deserialize::<Logon>().unwrap();
+    info!("logon_inp: {:?}", logon_out);
+    assert_eq!(logon_inp, logon_out);
+    recv_frame.complete().unwrap();
+
 }

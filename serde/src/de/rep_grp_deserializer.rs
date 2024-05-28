@@ -36,7 +36,7 @@ impl<'de, 'a, R: Read<'de> + 'a, S: Schema> de::MapAccess<'de> for RepeatingGrou
         {
             assert_eq!(
                 NAME_REP_GROUP_MAPACCESS,
-                type_name::<Self>().split("<").next().unwrap().split("::").last().unwrap(),
+                type_name::<Self>().split('<').next().unwrap().split("::").last().unwrap(),
                 "Forgot to rename NAME_MAPACESS after refactoring"
             );
         }
@@ -195,7 +195,7 @@ impl<'a, R, S: Schema> RepeatingGroupSeqAccess<'a, R, S> {
         #[cfg(debug_assertions)]
         assert_eq!(
             NAME_REP_GROUP_SEQ_ACCESS,
-            type_name::<Self>().split("<").next().unwrap().split("::").last().unwrap(),
+            type_name::<Self>().split('<').next().unwrap().split("::").last().unwrap(),
             "Forgot to rename NAME_SEQ_ACCESS after refactoring"
         );
 

@@ -72,35 +72,35 @@ impl<'de, 'any, R: Read<'de> + 'any, X: Schema> de::MapAccess<'de> for GreedyMap
     }
 }
 
-const NAME_STRICT_MAPACCESS: &str = "StrictMapAccess";
+const NAME_LAZY_MAPACCESS: &str = "LazyMapAccess";
 /// Map access is initialized with a list of fields/fix tags that are expected to be deserialized.
-/// [`StrictMapAccess::next_key_seed`] will stop yielding keys as soon at it encounters a tag that is not in the list of expected tags.
+/// [`LazyMapAccess::next_key_seed`] will stop yielding keys as soon at it encounters a tag that is not in the list of expected tags.
 /// Typically reserved for deserializing parts fo the FIX Header because fields are fixed and known.
-pub struct StrictMapAccess<'a, R, S> {
+pub struct LazyMapAccess<'a, R, S> {
     deserializer: &'a mut Deserializer<R, S>,
     name: &'static str,
     fields: &'static [&'static str],
 }
-impl<'a, R, S> StrictMapAccess<'a, R, S> {
+impl<'a, R, S> LazyMapAccess<'a, R, S> {
     #[inline]
     pub fn new(deserializer: &'a mut Deserializer<R, S>, name: &'static str, fields: &'static [&'static str]) -> Self {
         #[cfg(debug_assertions)]
         assert_eq!(
-            NAME_STRICT_MAPACCESS,
+            NAME_LAZY_MAPACCESS,
             type_name::<Self>().split("<").next().unwrap().split("::").last().unwrap(),
             "Forgot to rename NAME_MAPACESS after refactoring"
         );
 
-        StrictMapAccess { deserializer, name, fields }
+        LazyMapAccess { deserializer, name, fields }
     }
 }
-impl<'de, 'a, R: Read<'de> + 'a, S: Schema> de::MapAccess<'de> for StrictMapAccess<'a, R, S> {
+impl<'de, 'a, R: Read<'de> + 'a, S: Schema> de::MapAccess<'de> for LazyMapAccess<'a, R, S> {
     type Error = Error;
     fn next_key_seed<K: de::DeserializeSeed<'de>>(&mut self, seed: K) -> Result<Option<K::Value>> {
         #[cfg(debug_assertions)]
         {
             assert_eq!(
-                NAME_STRICT_MAPACCESS,
+                NAME_LAZY_MAPACCESS,
                 type_name::<Self>().split("<").next().unwrap().split("::").last().unwrap(),
                 "Forgot to rename NAME_MAPACESS after refactoring"
             );
@@ -114,7 +114,7 @@ impl<'de, 'a, R: Read<'de> + 'a, S: Schema> de::MapAccess<'de> for StrictMapAcce
                 #[cfg(debug_assertions)]
                 log::trace!(
                     "{:<50} peeked_tag: '{}', peeked_tag_idx: {:?}, {}@['{}'] read: {}",
-                    format!("{}::next_key_seed", NAME_STRICT_MAPACCESS),
+                    format!("{}::next_key_seed", NAME_LAZY_MAPACCESS),
                     peeked_tag.to_string(),
                     peeked_tag_idx,
                     self.name,
@@ -139,7 +139,7 @@ impl<'de, 'a, R: Read<'de> + 'a, S: Schema> de::MapAccess<'de> for StrictMapAcce
         {
             log::trace!(
                 "{:<50} parased_tag: {:?} ",
-                format!("{}::next_value_seed", NAME_STRICT_MAPACCESS),
+                format!("{}::next_value_seed", NAME_LAZY_MAPACCESS),
                 _parsed_tag.to_string()
             );
         }
@@ -233,7 +233,7 @@ impl<'de, 'a, R: Read<'de>, X: Schema> de::Deserializer<'de> for &'a mut Deseria
         #[cfg(debug_assertions)]
         log::trace!("{:<50} {}", format!("{}::deserialize_struct", NAME_DESERIALIZER), name);
         if name.starts_with("Header") || name.starts_with("Tagged") {
-            visitor.visit_map(StrictMapAccess::new(self, name, fields))
+            visitor.visit_map(LazyMapAccess::new(self, name, fields))
         } else {
             visitor.visit_map(GreedyMapAccess::new(self))
         }
@@ -298,7 +298,7 @@ impl<'de, 'a, R: Read<'de>, X: Schema> de::Deserializer<'de> for &'a mut Deseria
                 // "95=4|data=1234|" it will be serialized as "4|1234|" // NOTE this is not a valid fix format but it helps with testing
                 let data_len = self.read.parse_value_as_number::<usize>()?;
                 let data = self.read.parse_value_with_length(data_len)?;
-                visitor.visit_borrowed_bytes(&data)
+                visitor.visit_borrowed_bytes(data)
             }
         }
     }

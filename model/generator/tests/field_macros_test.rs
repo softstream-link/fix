@@ -58,13 +58,14 @@ fn test_fix_string_str_ascii_asc() {
     fix_string!(Account, 1);
 
     let _inp = Account::new("ABC");
+    let _inp: Account<_> = "ABC".into();
     let _inp: Account<&str> = "ABC".into();
     let _inp: Account<&str> = Default::default();
 
     let _inp = Account::new("ABC".to_owned());
     let _inp: Account<String> = Account::new("ABC".into());
     let _inp: Account<String> = "ABC".to_owned().into();
-    let _inp: Account<String> = "ABC".into();
+    // let _inp: Account<String> = "ABC".into();
     let _inp: Account<String> = Default::default();
 
     let _inp = Account::new(asc::try_from_str("ABC").unwrap());

@@ -9,6 +9,6 @@ pub use crate::types::{
     dat::{dat, Base64},
     dat_codec::dat_codec,
     data::Data,
-    fixmsgtype::MsgType,
+    fixmsgtype::MsgTypeCode,
 };
 

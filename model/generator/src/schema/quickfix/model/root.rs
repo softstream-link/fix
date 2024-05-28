@@ -1,6 +1,6 @@
 use super::component_def::{QFCompomentPart, QFComponentDef, QFComponentDefs};
 use super::field_def::{QFFieldDef, QFFieldDefs};
-use super::header_trailer_def::{QFHeaderDef, QFTrailerDef};
+use super::header_trailer_def::QFHeaderDef;
 use super::message_def::{QFMessageDef, QFMessageDefs, QFMessagePart};
 use super::refs::{QFComponentRef, QFFieldRef};
 use super::repgroup_def::{QFGroupDef, QFGroupPart, QFRepGroupDef};
@@ -38,9 +38,8 @@ pub struct QFModel {
     #[serde(rename = "header")]
     header_def: QFHeaderDef,
 
-    #[serde(rename = "trailer")]
-    trailer_def: QFTrailerDef,
-
+    // #[serde(rename = "trailer")]
+    // trailer_def: QFTrailerDef,
     #[serde(skip_deserializing)]
     pub fld_defs_plain: Vec<QFFieldDef>,
 
@@ -50,53 +49,24 @@ pub struct QFModel {
 
 impl QFModel {
     fn complete_preparation(&mut self) {
-        (&mut self.fld_defs).sort();
-        (&mut self.cmp_defs).sort();
+        // these are defined in the fix_serde module
+        const HEADER_1_ENVELOPE_SEQUENCE: &[&str] = &["BeginString", "BodyLength"];
+        const HEADER_2_TYPE_COMP_ID_SEQUENCE: &[&str] = &["MsgType", "SenderCompID", "TargetCompID"];
+        const TRAILER_1_SIGNATURE: &[&str] = &["SignatureLength", "Signature"];
+        const TRAILER_2_CHECKSUM: &[&str] = &["CheckSum"];
+
+        // only generate flds that are not defined it the fix_serde modeul
+        self.fld_defs.get_mut().retain(|f| {
+            !HEADER_1_ENVELOPE_SEQUENCE.contains(&f.name.as_str())
+                && !HEADER_2_TYPE_COMP_ID_SEQUENCE.contains(&f.name.as_str())
+                && !TRAILER_1_SIGNATURE.contains(&f.name.as_str())
+                && !TRAILER_2_CHECKSUM.contains(&f.name.as_str())
+        });
+        self.fld_defs.sort();
+        self.cmp_defs.sort();
 
         {
             // add header to messages so that thier rust structs are created
-            // self.msg_defs.defs.push(QFMessageDef {
-            //     name: "HeaderFull".to_string(),
-            //     msg_type: "N/A".to_string(),
-            //     msg_cat: "header".to_string(),
-            //     parts: Some(self.header_def.parts.clone()),
-            // });
-            const HEADER_1_ENVELOPE_SEQUENCE: &[&str] = &["BeginString", "BodyLength"];
-            self.msg_defs.defs.push(QFMessageDef {
-                name: "Header1EnvelopeSequence".to_string(),
-                msg_type: "N/A".to_string(),
-                msg_cat: "header".to_string(),
-                parts: {
-                    Some(
-                        self.header_def
-                            .parts
-                            .iter()
-                            .filter_map(|f| match HEADER_1_ENVELOPE_SEQUENCE.contains(&f.name()) {
-                                true => Some(f.clone()), // will be required by fix defintion
-                                false => None,
-                            })
-                            .collect::<Vec<_>>(),
-                    )
-                },
-            });
-            const HEADER_2_TYPE_SEQUENCE: &[&str] = &["MsgType", "SenderCompID", "TargetCompID"];
-            self.msg_defs.defs.push(QFMessageDef {
-                name: "Header2TypeSequence".to_string(),
-                msg_type: "N/A".to_string(),
-                msg_cat: "header".to_string(),
-                parts: {
-                    Some(
-                        self.header_def
-                            .parts
-                            .iter()
-                            .filter_map(|f| match HEADER_2_TYPE_SEQUENCE.contains(&f.name()) {
-                                true => Some(f.clone()), // will be required by fix defintion
-                                false => None,
-                            })
-                            .collect::<Vec<_>>(),
-                    )
-                },
-            });
 
             self.msg_defs.defs.push(QFMessageDef {
                 name: "Header3OperationalSequence".to_string(),
@@ -107,53 +77,54 @@ impl QFModel {
                         self.header_def
                             .parts
                             .iter()
-                            .filter_map(
-                                |f| match !HEADER_1_ENVELOPE_SEQUENCE.contains(&f.name()) && !HEADER_2_TYPE_SEQUENCE.contains(&f.name()) {
+                            .filter_map(|f| {
+                                match !HEADER_1_ENVELOPE_SEQUENCE.contains(&f.name()) && !HEADER_2_TYPE_COMP_ID_SEQUENCE.contains(&f.name()) {
                                     true => Some(f.clone()),
                                     false => None,
-                                },
-                            )
+                                }
+                            })
                             .collect::<Vec<_>>(),
                     )
                 },
             });
 
-            self.header_def.parts.iter().for_each(|part| match part {
-                QFMessagePart::FieldRef(_) | QFMessagePart::ComponentRef(_) => {
-                    self.msg_defs.defs.push(QFMessageDef {
-                        name: "TagValueHeader".to_owned() + &part.name(),
-                        msg_type: "N/A".to_string(),
-                        msg_cat: "header".to_string(),
-                        parts: Some(vec![QFMessagePart::FieldRef(QFFieldRef {
-                            name: part.name().to_owned(),
-                            required: "Y".to_string(),
-                        })]),
-                    });
-                }
-                _ => {} // TODO TagValue structs for header groups or other groups are not created at the moment
-            });
+            // All of these already have a tagvalue equiv from field defs
+            // self.header_def.parts.iter().for_each(|part| match part {
+            //     QFMessagePart::FieldRef(_) | QFMessagePart::ComponentRef(_) => {
+            //         self.msg_defs.defs.push(QFMessageDef {
+            //             name: "TagValueHeader".to_owned() + &part.name(),
+            //             msg_type: "N/A".to_string(),
+            //             msg_cat: "header".to_string(),
+            //             parts: Some(vec![QFMessagePart::FieldRef(QFFieldRef {
+            //                 name: part.name().to_owned(),
+            //                 required: "Y".to_string(),
+            //             })]),
+            //         });
+            //     }
+            //     _ => {} // TODO TagValue structs for header groups or other groups are not created at the moment
+            // });
         }
-        // add trailer to messages so that thier rust structs are created
-        {
-            self.msg_defs.defs.push(QFMessageDef {
-                name: "Trailer".to_string(),
-                msg_type: "N/A".to_string(),
-                msg_cat: "trailer".to_string(),
-                parts: Some(self.trailer_def.parts.clone()),
-            });
+        // // add trailer to messages so that thier rust structs are created
+        // {
+        //     self.msg_defs.defs.push(QFMessageDef {
+        //         name: "Trailer".to_string(),
+        //         msg_type: "N/A".to_string(),
+        //         msg_cat: "trailer".to_string(),
+        //         parts: Some(self.trailer_def.parts.clone()),
+        //     });
 
-            self.trailer_def.parts.iter().for_each(|f| {
-                self.msg_defs.defs.push(QFMessageDef {
-                    name: "TagValueTrailer".to_owned() + &f.name(),
-                    msg_type: "N/A".to_string(),
-                    msg_cat: "trailer".to_string(),
-                    parts: Some(vec![QFMessagePart::FieldRef(QFFieldRef {
-                        name: f.name().to_owned(),
-                        required: "Y".to_string(),
-                    })]),
-                });
-            });
-        }
+        //     self.trailer_def.parts.iter().for_each(|f| {
+        //         self.msg_defs.defs.push(QFMessageDef {
+        //             name: "TagValueTrailer".to_owned() + &f.name(),
+        //             msg_type: "N/A".to_string(),
+        //             msg_cat: "trailer".to_string(),
+        //             parts: Some(vec![QFMessagePart::FieldRef(QFFieldRef {
+        //                 name: f.name().to_owned(),
+        //                 required: "Y".to_string(),
+        //             })]),
+        //         });
+        //     });
+        // }
 
         {
             // already sorted because .fld_defs are sorted

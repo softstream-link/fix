@@ -1,8 +1,11 @@
 #[macro_export]
 macro_rules! fix_string {
     ($NAME:ident, $TAG:literal) => {
+        $crate::fix_string!($NAME, $TAG, pub);
+    };
+    ($NAME:ident, $TAG:literal, $VIS:vis) => {
         #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Copy)]
-        pub struct $NAME<S>(S);
+        $VIS struct $NAME<S>(S);
         impl<S> $NAME<S> {
             #[inline]
             pub fn new(value: S) -> Self {
@@ -118,12 +121,6 @@ macro_rules! fix_string {
                 Self::new(value)
             }
         }
-        impl From<&str> for $NAME<String> {
-            #[inline]
-            fn from(value: &str) -> Self {
-                Self::new(value.to_owned())
-            }
-        }
         impl From<fix_model_core::prelude::Ascii> for $NAME<fix_model_core::prelude::Ascii> {
             #[inline]
             fn from(value: fix_model_core::prelude::Ascii) -> Self {
@@ -161,15 +158,18 @@ macro_rules! fix_string {
         $crate::_debug!($NAME, <S>);
         $crate::_display!($NAME, <S>);
         $crate::_impl_field_meta!($NAME, $TAG, <S>);
-    };
+    }
 }
 pub use fix_string;
 
 #[macro_export]
 macro_rules! fix_char_any {
     ($NAME:ident, $TAG:literal) => {
+        $crate::fix_char_any!($NAME, $TAG, pub);
+    };
+    ($NAME:ident, $TAG:literal, $VIS:vis) => {
         #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Copy)]
-        pub struct $NAME<C>(C);
+        $VIS struct $NAME<C>(C);
         impl<C> $NAME<C> {
             #[inline]
             pub fn new(value: C) -> Self {
@@ -242,16 +242,22 @@ macro_rules! fix_char_any {
         $crate::_impl_field_meta!($NAME, $TAG, <C>);
         $crate::_debug!($NAME, <C>);
         $crate::_display!($NAME, <C>);
-    };
+    }
 }
 pub use fix_char_any;
 
 // TODO how to serialize ENUM with json using Variant Name instead of Variant Value
 #[macro_export]
 macro_rules! fix_ascii_char_enum {
-    ($NAME:ident, $TAG:literal, $($VARIANT:tt : $VALUE:literal),*, ) => {
+    ($NAME:ident, $TAG:literal, $($VARIANT:tt : $VALUE:literal),* , ) => { // closing comma variant
+        $crate::fix_ascii_char_enum!($NAME, $TAG, pub, $($VARIANT: $VALUE),* , );
+    };
+    ($NAME:ident, $TAG:literal, $($VARIANT:tt : $VALUE:literal),* ) => { // NO closing comma variant
+        $crate::fix_ascii_char_enum!($NAME, $TAG, pub, $($VARIANT: $VALUE),* , );
+    };
+    ($NAME:ident, $TAG:literal, $VIS:vis, $($VARIANT:tt : $VALUE:literal),*, ) => {
         #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Copy, Default)]
-        pub enum $NAME{
+        $VIS enum $NAME{
             #[default]
             $(
                 #[serde(rename = $VALUE)]
@@ -270,13 +276,9 @@ macro_rules! fix_ascii_char_enum {
                 }
             }
         }
-        // $crate::_impl_new_and_value!($NAME, char);
         $crate::_impl_field_meta!($NAME, $TAG);
         $crate::_debug!($NAME, $($VARIANT: $VALUE),+);
         $crate::_display!($NAME, $($VARIANT: $VALUE),+);
-    };
-    ($NAME:ident, $TAG:literal, $($VARIANT:tt : $VALUE:literal),* ) => {
-        $crate::fix_ascii_char_enum!($NAME, $TAG, $($VARIANT: $VALUE),* , );
     }
 }
 pub use fix_ascii_char_enum;
@@ -428,9 +430,12 @@ pub use fix_data;
 
 #[macro_export]
 macro_rules! _fix_numeric_fixed_length {
-    ($NAME:ident, $TAG:literal, $TY:tt, $LEN:literal) => {
+    // ($NAME:ident, $TAG:literal, $TY:tt, $LEN:literal) => {
+    //     $crate::_fix_numeric_fixed_length!($NAME, $TAG, pub, $TY, $LEN);
+    // };
+    ($NAME:ident, $TAG:literal, $VIS:vis, $TY:tt, $LEN:literal) => {
         #[derive(serde::Deserialize, PartialEq, Clone, Default)]
-        pub struct $NAME($TY);
+        $VIS struct $NAME($TY);
         impl serde::Serialize for $NAME {
             fn serialize<S: serde::Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
                 if serializer.is_human_readable() {
@@ -440,8 +445,15 @@ macro_rules! _fix_numeric_fixed_length {
                     let value = buf.format(self.0);
                     use std::io::Write;
                     let mut buf_pad = [0u8; $LEN];
-                    write!(&mut buf_pad[..], concat!("{:0>", stringify!($LEN), "}"), value)
-                        .expect(concat!("Failed serialize ", stringify!($NAME), "(" , stringify!($TY), ")", " into a buffer of size ", stringify!($LEN)));
+                    write!(&mut buf_pad[..], concat!("{:0>", stringify!($LEN), "}"), value).expect(concat!(
+                        "Failed serialize ",
+                        stringify!($NAME),
+                        "(",
+                        stringify!($TY),
+                        ")",
+                        " into a buffer of size ",
+                        stringify!($LEN)
+                    ));
                     serializer.serialize_bytes(&buf_pad)
                 }
             }
@@ -456,19 +468,25 @@ macro_rules! _fix_numeric_fixed_length {
         $crate::_impl_field_meta!($NAME, $TAG);
         $crate::_debug!($NAME);
         $crate::_display!($NAME);
-    };
+    }
 }
 #[macro_export]
 macro_rules! fix_usize_fixed_length {
     ($NAME:ident, $TAG:literal) => {
-        $crate::_fix_numeric_fixed_length!($NAME, $TAG, usize, 20);
+        $crate::_fix_numeric_fixed_length!($NAME, $TAG, pub, usize, 20);
+    };
+    ($NAME:ident, $TAG:literal, $VIS:vis) => {
+        $crate::_fix_numeric_fixed_length!($NAME, $TAG, $VIS, usize, 20);
     };
 }
 pub use fix_usize_fixed_length;
 #[macro_export]
 macro_rules! fix_u8_fixed_length {
     ($NAME:ident, $TAG:literal) => {
-        $crate::_fix_numeric_fixed_length!($NAME, $TAG, u8, 3);
+        $crate::_fix_numeric_fixed_length!($NAME, $TAG, pub, u8, 3);
+    };
+    ($NAME:ident, $TAG:literal, $VIS:vis) => {
+        $crate::_fix_numeric_fixed_length!($NAME, $TAG, $VIS, u8, 3);
     };
 }
 pub use fix_u8_fixed_length;
@@ -476,8 +494,11 @@ pub use fix_u8_fixed_length;
 #[macro_export]
 macro_rules! _fix_numeric {
     ($NAME:ident, $TAG:literal, $TY:tt) => {
+        $crate::_fix_numeric!($NAME, $TAG, pub, $TY);
+    };
+    ($NAME:ident, $TAG:literal, $VIS:vis, $TY:tt) => {
         #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Default)]
-        pub struct $NAME($TY);
+        $VIS struct $NAME($TY);
         impl From<$TY> for $NAME {
             #[inline]
             fn from(value: $TY) -> Self {
@@ -494,7 +515,10 @@ macro_rules! _fix_numeric {
 #[macro_export]
 macro_rules! fix_usize {
     ($NAME:ident, $TAG:literal) => {
-        $crate::_fix_numeric!($NAME, $TAG, usize);
+        $crate::_fix_numeric!($NAME, $TAG, pub, usize);
+    };
+    ($NAME:ident, $TAG:literal, $VIS:vis) => {
+        $crate::_fix_numeric!($NAME, $TAG, $VIS, usize);
     };
 }
 pub use fix_usize;
@@ -504,14 +528,20 @@ macro_rules! fix_isize {
     ($NAME:ident, $TAG:literal) => {
         $crate::_fix_numeric!($NAME, $TAG, isize);
     };
+    ($NAME:ident, $TAG:literal, $VIS:vis) => {
+        $crate::_fix_numeric!($NAME, $TAG, $VIS, isize);
+    };
 }
 pub use fix_isize;
 
 #[macro_export]
 macro_rules! fix_float64 {
     ($NAME:ident, $TAG:literal) => {
-        $crate::_fix_numeric!($NAME, $TAG, f64);
+        $crate::_fix_numeric!($NAME, $TAG, pub, f64);
     };
+    ($NAME:ident, $TAG:literal, $VIS:vis) => {
+        $crate::_fix_numeric!($NAME, $TAG, $VIS, f64);
+    }
 }
 pub use fix_float64;
 #[macro_export]
@@ -519,16 +549,22 @@ macro_rules! fix_float32 {
     ($NAME:ident, $TAG:literal) => {
         $crate::_fix_numeric!($NAME, $TAG, f32);
     };
+    ($NAME:ident, $TAG:literal, $VIS:vis) => {
+        $crate::_fix_numeric!($NAME, $TAG, $VIS, f32);
+    }
 }
 pub use fix_float32;
 
 #[macro_export]
 macro_rules! fix_bool {
     ($NAME:ident, $TAG:literal) => {
+        $crate::fix_bool!($NAME, $TAG, pub);
+    };
+    ($NAME:ident, $TAG:literal, $VIS:vis) => {
         /// FIX boolean field, represented as a char 'Y' or 'N' because we want both fix serializer to
         /// output a char and not have a special boolean serialization/deserialization logic
         #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Default)]
-        pub struct $NAME(bool);
+        $VIS struct $NAME(bool);
         impl From<bool> for $NAME {
             #[inline]
             fn from(value: bool) -> Self {

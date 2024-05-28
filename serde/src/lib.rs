@@ -28,8 +28,7 @@ fn se_from_trait<W: Write, T: serde::Serialize, S: Schema>(write: W, value: T) -
 
 pub fn to_bytes_with_schema<T: serde::Serialize, S: Schema>(value: &T, capacity: Option<usize>) -> Result<Serializer<BytesWrite, S>> {
     let write = BytesWrite::new(BytesMut::with_capacity(capacity.unwrap_or_default()));
-    let ser = se_from_trait(write, value);
-    ser
+    se_from_trait(write, value)
 }
 /// Will not preallocate capacity for the output buffer and will generate invalid output if T contains binary data as it requires a Schema.
 pub fn to_bytes<T: serde::Serialize>(value: &T) -> Result<Serializer<BytesWrite, NoBinaryDataSchema>> {

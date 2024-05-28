@@ -83,6 +83,10 @@ impl<'origin> SliceRead<'origin> {
     pub fn len(&self) -> usize {
         self.slice.len()
     }
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.slice.is_empty()
+    }
 
     pub fn parse_number<T>(value: &[u8]) -> Result<T>
     where
@@ -183,11 +187,10 @@ impl<'origin> Display for SliceRead<'origin> {
         write!(f, "len: {} slice: \"{}/#{}👉{}\"", self.len(), read, self.idx_current, unread)
     }
 }
-impl<'origin> Debug for SliceRead<'origin>{
+impl<'origin> Debug for SliceRead<'origin> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.to_string())
     }
-
 }
 impl<'origin> Read<'origin> for SliceRead<'origin> {
     #[inline]
@@ -236,7 +239,7 @@ impl<'origin> Read<'origin> for SliceRead<'origin> {
                 self.len() - start,
             );
             // returns current position where length is expected to start
-            return Err(Error::UnexpectedEof(self.idx().into()));
+            Err(Error::UnexpectedEof(self.idx().into()))
         } else if self.slice[end] != crate::SOH {
             #[cfg(debug_assertions)]
             log::error!(
@@ -245,7 +248,7 @@ impl<'origin> Read<'origin> for SliceRead<'origin> {
                 (&self.slice[end..end + 1]).to_string(),
                 self,
             );
-            return Err(Error::InvalidFixFrame(end.into()));
+            Err(Error::InvalidFixFrame(end.into()))
         } else {
             self.idx_current = end;
             self.discard(); // SOH

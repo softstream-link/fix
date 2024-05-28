@@ -240,8 +240,22 @@ impl<W: Write, S: Schema> ser::Serializer for &mut Serializer<W, S> {
                 self.write.write_value(itoa::Buffer::new().format(len).as_bytes())?;
                 self.write.write_soh()?;
 
-                match self.write.last_written_tag() {
-                    Some(tag) => match S::lookup(tag) {
+                // match self.write.last_written_tag() {
+                //     Some(tag) => match S::lookup(tag) {
+                //         // We are looking at binary data and hence need to add data with equal sign '<dat_tag>=' SerialieSeq::
+                //         Some(BinaryDataLenPair { tag_len: _, tag_data }) => {
+                //             self.write.write_tag(tag_data)?;
+                //             self.write.write_eqs()?;
+                //         }
+                //         // we are looking at repeating group and SerailizeSeq::next_element will serialize the rests
+                //         None => {
+                //             // self.serialize_soh()?; {}
+                //         }
+                //     },
+                //     None => {}
+                // }
+                if let Some(tag) = self.write.last_written_tag() {
+                    match S::lookup(tag) {
                         // We are looking at binary data and hence need to add data with equal sign '<dat_tag>=' SerialieSeq::
                         Some(BinaryDataLenPair { tag_len: _, tag_data }) => {
                             self.write.write_tag(tag_data)?;
@@ -251,8 +265,7 @@ impl<W: Write, S: Schema> ser::Serializer for &mut Serializer<W, S> {
                         None => {
                             // self.serialize_soh()?; {}
                         }
-                    },
-                    None => {}
+                    }
                 }
 
                 return Ok(self);

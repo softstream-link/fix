@@ -52,24 +52,31 @@ impl RFModel {
         let apps_enum = self
             .msg_defs
             .iter()
-            .filter(|msg_def| msg_def.msg_category == MessageCategory::App)
             .filter_map(|msg_def| {
-                let name = format_ident!("{}", msg_def.name.as_str());
-                let generic_names = msg_def.generics(self).generic_names;
-                Some(quote! (#name(#name #generic_names),))
+                if matches!(msg_def.msg_category, MessageCategory::App) {
+                    let name = format_ident!("{}", msg_def.name.as_str());
+                    let generic_names = msg_def.generics(self).generic_names;
+                    Some(quote! (#name(#name #generic_names),))
+                } else {
+                    None
+                }
             })
             .collect::<Vec<_>>();
 
         let admin_enum = self
             .msg_defs
             .iter()
-            .filter(|msg_def| msg_def.msg_category == MessageCategory::Admin)
             .filter_map(|msg_def| {
-                let name = format_ident!("{}", msg_def.name.as_str());
-                let generic_names = msg_def.generics(self).generic_names;
-                Some(quote! (#name(#name #generic_names),))
+                if matches!(msg_def.msg_category, MessageCategory::Admin) {
+                    let name = format_ident!("{}", msg_def.name.as_str());
+                    let generic_names = msg_def.generics(self).generic_names;
+                    Some(quote! (#name(#name #generic_names),))
+                } else {
+                    None
+                }
             })
             .collect::<Vec<_>>();
+
         // TODO add dynamic generic resolution of names
         format_token_stream(&quote! {
             #[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Clone)]

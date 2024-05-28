@@ -52,7 +52,7 @@ fn test_generated_test_request() {
 #[test]
 fn test_generated_new_order_single() {
     setup::log::configure();
-    let s = NewOrderSingle::<String, char, Data> {
+    let s = NewOrderSingle::<&str, char, Data> {
         cl_ord_id: "cl_ord_id".into(),
         symbol: "IBM".into(),
         handl_inst: HandlInst::AutomatedExecutionOrderPrivateNoBrokerIntervention,

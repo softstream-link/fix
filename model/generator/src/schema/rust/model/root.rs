@@ -78,7 +78,9 @@ impl RFModel {
             .collect::<Vec<_>>();
 
         // TODO add dynamic generic resolution of names
+        // TODO Box large enum variants
         format_token_stream(&quote! {
+            #[allow(clippy::large_enum_variant)]
             #[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Clone)]
             pub enum MsgApp<S, C, D>{
                 #(#apps_enum)*

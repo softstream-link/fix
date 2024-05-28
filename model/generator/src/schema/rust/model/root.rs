@@ -87,11 +87,11 @@ impl RFModel {
             pub enum MsgAdm<S, D>{
                 #(#admin_enum)*
             }
-            #[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Clone)]
-            pub enum Msg<S, C, D>{
-                App(MsgApp<S, C, D>),
-                Adm(MsgAdm<S, D>),
-            }
+            // #[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Clone)]
+            // pub enum Msg<S, C, D>{
+            //     App(MsgApp<S, C, D>),
+            //     Adm(MsgAdm<S, D>),
+            // }
         })
     }
 

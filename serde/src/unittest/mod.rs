@@ -55,8 +55,8 @@ mod tests {
 }
 
 pub fn to_bytes_unittest<T: serde::ser::Serialize>(value: &T) -> Result<Serializer<BytesWrite, UnitTestSchema>> {
-    crate::to_bytes_with_schema(value, None, UnitTestSchema)
+    crate::to_bytes_with_schema::<T, UnitTestSchema>(value, None)
 }
 pub fn from_slice_unittest<'de, T: serde::de::Deserialize<'de>>(slice: &'de [u8]) -> Result<T> {
-    crate::from_slice_with_schema(slice, UnitTestSchema)
+    crate::from_slice_with_schema::<T, UnitTestSchema>(slice)
 }

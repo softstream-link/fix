@@ -1,3 +1,6 @@
+pub mod send;
+pub mod recv;
+
 use crate::{
     de::read::{Read, SliceRead},
     prelude::{Error, Result},
@@ -117,15 +120,15 @@ pub fn split_off_check_sum<'a>(buf: &'a [u8]) -> Result<Parts> {
     })
 }
 
-pub fn check_sum(buf: &[u8]) -> (u8, [u8; 3]) {
-    let check_sum_u8 = (buf.iter().fold(0_usize, |acc, &b| acc.wrapping_add(b as usize)) % 256) as u8;
-
-    use std::io::Write;
-    let mut buf = itoa::Buffer::new();
-    let mut check_sum_bytes = [0_u8; 3];
-    let value = buf.format(check_sum_u8);
-    write!(&mut check_sum_bytes[..], "{:0>3}", value).unwrap();
-    (check_sum_u8, check_sum_bytes)
+pub fn check_sum(buf: &[u8]) -> u8 {
+    (buf.iter().fold(0_usize, |acc, &b| acc.wrapping_add(b as usize)) % 256) as u8
+    // let check_sum_u8 = (buf.iter().fold(0_usize, |acc, &b| acc.wrapping_add(b as usize)) % 256) as u8;
+    // use std::io::Write;
+    // let mut buf = itoa::Buffer::new();
+    // let mut check_sum_bytes = [0_u8; 3];
+    // let value = buf.format(check_sum_u8);
+    // write!(&mut check_sum_bytes[..], "{:0>3}", value).unwrap();
+    // (check_sum_u8, check_sum_bytes)
 }
 
 #[cfg(test)]
@@ -217,18 +220,14 @@ mod test {
         setup::log::configure();
         let buf = "8=fix9=535=A"; // 10=080";
         info!("buf: {:?}", buf.as_bytes().to_string());
-        let (ch_u8, ch_bytes) = check_sum(buf.as_bytes());
-        info!("ch_u8: {}", ch_u8);
-        info!("ch_bytes: {}", ch_bytes.to_string());
-        assert_eq!(ch_u8, 80);
-        assert_eq!(&ch_bytes, b"080");
+        let csum = check_sum(buf.as_bytes());
+        info!("csum: {}", csum);
+        assert_eq!(csum, 80);
 
         let buf = "8=FIX.4.49=14835=D34=108049=TESTBUY152=20180920-18:14:19.50856=TESTSELL111=63673064027889863415=USD21=238=700040=154=155=MSFT60=20180920-18:14:19.492"; // 10=092";
         info!("buf: {}", buf.as_bytes().to_string());
-        let (ch_u8, ch_bytes) = check_sum(buf.as_bytes());
-        info!("ch_u8: {}", ch_u8);
-        info!("ch_bytes: {}", ch_bytes.to_string());
-        assert_eq!(ch_u8, 92);
-        assert_eq!(&ch_bytes, b"092");
+        let csum = check_sum(buf.as_bytes());
+        info!("csum: {}", csum);
+        assert_eq!(csum, 92);
     }
 }

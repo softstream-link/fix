@@ -16,15 +16,13 @@ use std::{
 const NAME_SERIALIZER: &str = "Serializer";
 pub struct Serializer<W, S> {
     write: W,
-    is_human_readable: bool,
-    _schema: S,
+    phantom: std::marker::PhantomData<S>,
 }
 impl<W: Write, S: Schema> Serializer<W, S> {
-    pub fn new(write: W, is_human_readable: bool, schema: S) -> Self {
+    pub fn new(write: W) -> Self {
         Self {
             write,
-            is_human_readable,
-            _schema: schema,
+            phantom: std::marker::PhantomData,
         }
     }
     #[inline(always)]
@@ -79,7 +77,7 @@ impl<W: Write, S: Schema> ser::Serializer for &mut Serializer<W, S> {
     type SerializeStruct = Self;
     type SerializeStructVariant = Self;
     fn is_human_readable(&self) -> bool {
-        self.is_human_readable
+        false
     }
     impl_serialize_integer!(
         serialize_u8(self, v: u8),

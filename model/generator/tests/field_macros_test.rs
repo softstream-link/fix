@@ -254,7 +254,7 @@ fn test_char_enum() {
 fn test_fix_u8_fixed_len() {
     setup::log::configure();
 
-    // usize::MAX 18446744073709551615 len 20
+    // 88::MAX 255 len 3
     fix_u8_fixed_length!(CheckSum, 10);
     let _inp = CheckSum::new(2);
     let inp: CheckSum = 2.into();
@@ -263,6 +263,11 @@ fn test_fix_u8_fixed_len() {
     info!("fix_ser: {}", fix_ser);
     let jsn_ser = to_string(&inp).unwrap();
     info!("jsn_ser: {}", jsn_ser);
+
+    let fix_out = from_slice_unittest::<CheckSum>(&fix_ser).unwrap();
+    let jsn_out = serde_json::from_str::<CheckSum>(&jsn_ser).unwrap();
+    assert_eq!(jsn_out, fix_out);
+    assert_eq!(jsn_out.value(), 2);
 }
 #[test]
 fn test_fix_usize_fixed_len() {

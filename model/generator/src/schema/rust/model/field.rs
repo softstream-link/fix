@@ -103,6 +103,8 @@ pub enum RFldPlainType {
     String,  // has generic
     CharAny, // has generic
     USize,
+    USizeFixedLength,
+    U8FixedLength,
     ISize,
     Float64,
     Float32,
@@ -133,7 +135,11 @@ impl TryFrom<&QFFieldDef> for RFldDefPlain {
     fn try_from(qf_field_def: &QFFieldDef) -> Result<Self, Self::Error> {
         // log::warn!("RFldDefPlain name: {}, type: {}", qf_field_def.name, qf_field_def.r#type);
 
-        let field_type = if qf_field_def.is_generic_string() {
+        let field_type = if ["BodyLength"].contains(&qf_field_def.name.as_str()) {
+            RFldPlainType::USizeFixedLength
+        } else if ["CheckSum"].contains(&qf_field_def.name.as_str()) {
+            RFldPlainType::U8FixedLength
+        } else if qf_field_def.is_generic_string() {
             RFldPlainType::String
         } else if qf_field_def.is_generic_char() {
             RFldPlainType::CharAny
@@ -185,10 +191,15 @@ impl From<&RFldDefPlain> for TokenStream {
             RFldPlainType::String => quote!(
                 fix_model_generator::prelude::fix_string!(#name, #tag);
             ),
-            RFldPlainType::USize => match value.name.as_str() {
-                "BodyLength" => quote!(fix_model_generator::prelude::fix_usize_fixed_length!(#name, #tag);),
-                _ => quote!(fix_model_generator::prelude::fix_usize!(#name, #tag);),
-            },
+            RFldPlainType::USize => quote!(
+                fix_model_generator::prelude::fix_usize!(#name, #tag);
+            ),
+            RFldPlainType::USizeFixedLength => quote!(
+                fix_model_generator::prelude::fix_usize_fixed_length!(#name, #tag);
+            ),
+            RFldPlainType::U8FixedLength => quote!(
+                fix_model_generator::prelude::fix_u8_fixed_length!(#name, #tag);
+            ),
             RFldPlainType::ISize => quote!(
                 fix_model_generator::prelude::fix_isize!(#name, #tag);
             ),

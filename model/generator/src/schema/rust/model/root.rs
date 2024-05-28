@@ -120,15 +120,16 @@ impl RFModel {
             #index
         })
     }
-    pub fn serde_methods_to_code(&self) -> String {
+    pub fn helpers_to_code(&self) -> String {
         let schema_name = format_ident!("{}Schema", self.name);
         let methods = quote!(
             pub fn from_fix<'de, T: serde::Deserialize<'de>>(slice: &'de [u8]) -> fix_serde::prelude::Result<T> {
-                fix_serde::prelude::from_slice_with_schema(slice, #schema_name)
+                fix_serde::prelude::from_slice_with_schema::<_, #schema_name>(slice)
             }
             pub fn to_fix<T: serde::Serialize>(value: &T, capacity: Option<usize>) -> fix_serde::prelude::Result<fix_serde::prelude::Serializer<fix_serde::prelude::BytesWrite, #schema_name>> {
-                fix_serde::prelude::to_bytes_with_schema(value, capacity, #schema_name)
+                fix_serde::prelude::to_bytes_with_schema::<_,#schema_name>(value, capacity)
             }
+
         );
         format_token_stream(&quote! {
             #methods

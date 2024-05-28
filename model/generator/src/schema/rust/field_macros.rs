@@ -432,9 +432,9 @@ macro_rules! _fix_numeric_fixed_length {
         #[derive(serde::Deserialize, PartialEq, Clone, Default)]
         pub struct $NAME($TY);
         impl serde::Serialize for $NAME {
-            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            fn serialize<S: serde::Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
                 if serializer.is_human_readable() {
-                    return serializer.serialize_u64(self.0 as u64);
+                    serializer.serialize_u64(self.0 as u64)
                 } else {
                     let mut buf = itoa::Buffer::new();
                     let value = buf.format(self.0);

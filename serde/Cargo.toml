@@ -18,6 +18,7 @@ serde = { workspace = true }
 itoa = { workspace = true }
 ryu = { workspace = true }
 fix_model_core = { workspace = true }
+fix_model_generator = { workspace = true }
 
 # enabled when "unittest" feature is enabled
 # env_logger = { workspace = true, optional = true }
@@ -29,7 +30,7 @@ criterion = { workspace = true }
 
 fix_serde = { workspace = true }
 fix_model_test = { workspace = true }
-fix_model_generator = { workspace = true }
+
 
 env_logger = { workspace = true }
 colored = { workspace = true }

@@ -55,15 +55,15 @@ impl QFModel {
 
         {
             // add header to messages so that thier rust structs are created
+            // self.msg_defs.defs.push(QFMessageDef {
+            //     name: "HeaderFull".to_string(),
+            //     msg_type: "N/A".to_string(),
+            //     msg_cat: "header".to_string(),
+            //     parts: Some(self.header_def.parts.clone()),
+            // });
+            const HEADER_1_ENVELOPE_SEQUENCE: &[&str] = &["BeginString", "BodyLength"];
             self.msg_defs.defs.push(QFMessageDef {
-                name: "HeaderFull".to_string(),
-                msg_type: "N/A".to_string(),
-                msg_cat: "header".to_string(),
-                parts: Some(self.header_def.parts.clone()),
-            });
-            const HEADER_PART1: &[&str] = &["BeginString", "BodyLength"];
-            self.msg_defs.defs.push(QFMessageDef {
-                name: "Header1".to_string(),
+                name: "Header1EnvelopeSequence".to_string(),
                 msg_type: "N/A".to_string(),
                 msg_cat: "header".to_string(),
                 parts: {
@@ -71,17 +71,17 @@ impl QFModel {
                         self.header_def
                             .parts
                             .iter()
-                            .filter_map(|f| match HEADER_PART1.contains(&f.name()) {
-                                true => Some(f.clone()),
+                            .filter_map(|f| match HEADER_1_ENVELOPE_SEQUENCE.contains(&f.name()) {
+                                true => Some(f.clone()), // will be required by fix defintion
                                 false => None,
                             })
                             .collect::<Vec<_>>(),
                     )
                 },
             });
-            const HEADER_PART2: &[&str] = &["MsgType", "SenderCompID", "TargetCompID"];
+            const HEADER_2_TYPE_SEQUENCE: &[&str] = &["MsgType", "SenderCompID", "TargetCompID"];
             self.msg_defs.defs.push(QFMessageDef {
-                name: "Header2".to_string(),
+                name: "Header2TypeSequence".to_string(),
                 msg_type: "N/A".to_string(),
                 msg_cat: "header".to_string(),
                 parts: {
@@ -89,8 +89,8 @@ impl QFModel {
                         self.header_def
                             .parts
                             .iter()
-                            .filter_map(|f| match HEADER_PART2.contains(&f.name()) {
-                                true => Some(f.clone()),
+                            .filter_map(|f| match HEADER_2_TYPE_SEQUENCE.contains(&f.name()) {
+                                true => Some(f.clone()), // will be required by fix defintion
                                 false => None,
                             })
                             .collect::<Vec<_>>(),
@@ -99,7 +99,7 @@ impl QFModel {
             });
 
             self.msg_defs.defs.push(QFMessageDef {
-                name: "Header3".to_string(),
+                name: "Header3OperationalSequence".to_string(),
                 msg_type: "N/A".to_string(),
                 msg_cat: "header".to_string(),
                 parts: {
@@ -107,10 +107,12 @@ impl QFModel {
                         self.header_def
                             .parts
                             .iter()
-                            .filter_map(|f| match !HEADER_PART1.contains(&f.name()) && !HEADER_PART2.contains(&f.name()) {
-                                true => Some(f.clone()),
-                                false => None,
-                            })
+                            .filter_map(
+                                |f| match !HEADER_1_ENVELOPE_SEQUENCE.contains(&f.name()) && !HEADER_2_TYPE_SEQUENCE.contains(&f.name()) {
+                                    true => Some(f.clone()),
+                                    false => None,
+                                },
+                            )
                             .collect::<Vec<_>>(),
                     )
                 },

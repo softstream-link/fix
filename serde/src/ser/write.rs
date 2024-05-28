@@ -102,7 +102,7 @@ impl Display for BytesWrite {
         use fix_model_core::prelude::FixByteSlice2Display;
         write!(
             f,
-            "len: {}, capacity: {}, {}",
+            "len: {}, capacity: {}, bytes: \"{}\"",
             self.bytes.len(),
             self.bytes.capacity(),
             (&self.bytes as &[u8]).to_string()

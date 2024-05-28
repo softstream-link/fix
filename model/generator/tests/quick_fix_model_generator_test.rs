@@ -155,7 +155,7 @@ fn test_root_44_msgs() {
     info!("out_path: {:?}", out_path);
     fs::write(&out_path, index_code).unwrap();
 
-    let index_code = rf.serde_methods_to_code();
+    let index_code = rf.helpers_to_code();
     let out_path = Path::new(out_dir).join("helpers_v44.rs");
     info!("out_path: {:?}", out_path);
     fs::write(&out_path, index_code).unwrap();

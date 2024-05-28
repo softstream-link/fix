@@ -1,7 +1,7 @@
 use crate::error::{Error, Result};
 use fix_model_core::prelude::FixByteSlice2Display;
 use std::cmp::min;
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 
 // Prevent users from implementing the Read trait.
 mod private {
@@ -180,8 +180,14 @@ impl<'origin> Display for SliceRead<'origin> {
         let read = read.to_string();
         let unread = unread.to_string();
 
-        write!(f, "{{len: {} slice: \"{}/#{}👉{}\"}}", self.len(), read, self.idx_current, unread)
+        write!(f, "len: {} slice: \"{}/#{}👉{}\"", self.len(), read, self.idx_current, unread)
     }
+}
+impl<'origin> Debug for SliceRead<'origin>{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.to_string())
+    }
+
 }
 impl<'origin> Read<'origin> for SliceRead<'origin> {
     #[inline]

@@ -3,7 +3,7 @@ use crate::{
         enums_deserializer::EnumAccess,
         macros::{impl_deserialize_float, impl_deserialize_signed, impl_deserialize_unimplemented, impl_deserialize_unsigned},
         read::{Read, SliceRead},
-        tag_section_deserializer::TagSectionMapAccess,
+        rep_grp_deserializer::RepeatingGroupSeqAccess,
     },
     macros::asserted_short_name,
     prelude::{Error, Result},
@@ -13,27 +13,29 @@ use fix_model_core::{
     schema::BinaryDataLenPair,
 };
 use serde::de::{self};
+use std::any::type_name;
+use std::fmt::Display;
 
-use super::rep_grp_deserializer::RepeatingGroupSeqAccess;
-
-const NAME_TAG_VALUE_MAPACESS: &str = "BasicTagValueMapAccess";
 // https://doc.rust-lang.org/rust-byexample/scope/lifetime/lifetime_bounds.html
-struct BasicTagValueMapAccess<'a, R: 'a, S> {
-    deserializer: &'a mut Deserializer<R, S>,
+const NAME_GREEDY_MAPACESS: &str = "GreedyMapAccess";
+/// Will continue to yeild keys untill it encounters an EndOfFile.
+/// Typically reserved for deserializing the main body fo the FIX message since the fields are in the arbitrary order.
+struct GreedyMapAccess<'a, R: 'a, X> {
+    deserializer: &'a mut Deserializer<R, X>,
 }
-impl<'a, R: 'a, S> BasicTagValueMapAccess<'a, R, S> {
+impl<'a, R: 'a, X> GreedyMapAccess<'a, R, X> {
     #[inline]
-    pub fn new(deserializer: &'a mut Deserializer<R, S>) -> Self {
-        BasicTagValueMapAccess { deserializer }
+    pub fn new(deserializer: &'a mut Deserializer<R, X>) -> Self {
+        GreedyMapAccess { deserializer }
     }
 }
-impl<'de, 'any, R: Read<'de> + 'any, S: Schema> de::MapAccess<'de> for BasicTagValueMapAccess<'any, R, S> {
+impl<'de, 'any, R: Read<'de> + 'any, X: Schema> de::MapAccess<'de> for GreedyMapAccess<'any, R, X> {
     type Error = Error;
 
     fn next_key_seed<K: de::DeserializeSeed<'de>>(&mut self, seed: K) -> Result<Option<K::Value>> {
         #[cfg(debug_assertions)]
         assert_eq!(
-            NAME_TAG_VALUE_MAPACESS,
+            NAME_GREEDY_MAPACESS,
             std::any::type_name::<Self>().split("<").next().unwrap().split("::").last().unwrap(),
             "Forgot to rename NAME_TAG_VALUE_MAPACESS after refactoring"
         );
@@ -44,7 +46,7 @@ impl<'de, 'any, R: Read<'de> + 'any, S: Schema> de::MapAccess<'de> for BasicTagV
                 #[cfg(debug_assertions)]
                 log::trace!(
                     "{:<50} peeked_tag: {:?} ",
-                    format!("{}::next_key_seed", NAME_TAG_VALUE_MAPACESS),
+                    format!("{}::next_key_seed", NAME_GREEDY_MAPACESS),
                     peeked_tag.to_string()
                 );
 
@@ -60,7 +62,7 @@ impl<'de, 'any, R: Read<'de> + 'any, S: Schema> de::MapAccess<'de> for BasicTagV
         #[cfg(debug_assertions)]
         log::trace!(
             "{:<50} parsed_tag: {:?} self.read: {}",
-            format!("{}::next_value_seed", NAME_TAG_VALUE_MAPACESS),
+            format!("{}::next_value_seed", NAME_GREEDY_MAPACESS),
             parsed_tag.to_string(),
             self.deserializer.read
         );
@@ -70,19 +72,103 @@ impl<'de, 'any, R: Read<'de> + 'any, S: Schema> de::MapAccess<'de> for BasicTagV
     }
 }
 
-const NAME_DESERIALIZER: &str = "Deserializer";
-pub struct Deserializer<R, S> {
-    pub(crate) read: R,
-    is_human_readable: bool,
-    _schema: S,
+const NAME_STRICT_MAPACCESS: &str = "StrictMapAccess";
+/// Map access is initialized with a list of fields/fix tags that are expected to be deserialized.
+/// [`StrictMapAccess::next_key_seed`] will stop yielding keys as soon at it encounters a tag that is not in the list of expected tags.
+/// Typically reserved for deserializing parts fo the FIX Header because fields are fixed and known.
+pub struct StrictMapAccess<'a, R, S> {
+    deserializer: &'a mut Deserializer<R, S>,
+    name: &'static str,
+    fields: &'static [&'static str],
+}
+impl<'a, R, S> StrictMapAccess<'a, R, S> {
+    #[inline]
+    pub fn new(deserializer: &'a mut Deserializer<R, S>, name: &'static str, fields: &'static [&'static str]) -> Self {
+        #[cfg(debug_assertions)]
+        assert_eq!(
+            NAME_STRICT_MAPACCESS,
+            type_name::<Self>().split("<").next().unwrap().split("::").last().unwrap(),
+            "Forgot to rename NAME_MAPACESS after refactoring"
+        );
+
+        StrictMapAccess { deserializer, name, fields }
+    }
+}
+impl<'de, 'a, R: Read<'de> + 'a, S: Schema> de::MapAccess<'de> for StrictMapAccess<'a, R, S> {
+    type Error = Error;
+    fn next_key_seed<K: de::DeserializeSeed<'de>>(&mut self, seed: K) -> Result<Option<K::Value>> {
+        #[cfg(debug_assertions)]
+        {
+            assert_eq!(
+                NAME_STRICT_MAPACCESS,
+                type_name::<Self>().split("<").next().unwrap().split("::").last().unwrap(),
+                "Forgot to rename NAME_MAPACESS after refactoring"
+            );
+        }
+        // peek_tag and determine if it should be deserialized_ident via seed so that it can be mapped to field
+        match self.deserializer.read.peek_tag()? {
+            // not EndOfFile
+            Some(peeked_tag) => {
+                let peeked_tag_idx = self.fields.iter().find(|tag| if tag.as_bytes() == peeked_tag { true } else { false }); // TODO does this need to do a binary search?
+
+                #[cfg(debug_assertions)]
+                log::trace!(
+                    "{:<50} peeked_tag: '{}', peeked_tag_idx: {:?}, {}@['{}'] read: {}",
+                    format!("{}::next_key_seed", NAME_STRICT_MAPACCESS),
+                    peeked_tag.to_string(),
+                    peeked_tag_idx,
+                    self.name,
+                    self.fields.iter().map(|t| t.to_string()).collect::<Vec<String>>().join("', '"),
+                    self.deserializer.read
+                );
+
+                match peeked_tag_idx {
+                    Some(_) => seed.deserialize(&mut *self.deserializer).map(Some),
+                    None => Ok(None),
+                }
+            }
+            // EndOfFiles
+            _ => Ok(None), // REPEATING GROUP END
+        }
+    }
+
+    fn next_value_seed<V: de::DeserializeSeed<'de>>(&mut self, seed: V) -> Result<V::Value> {
+        // always deserialize/parse_tag but remember to also parse_tag which until now was only peeked
+        let _parsed_tag = self.deserializer.read.parse_tag()?;
+        #[cfg(debug_assertions)]
+        {
+            log::trace!(
+                "{:<50} parased_tag: {:?} ",
+                format!("{}::next_value_seed", NAME_STRICT_MAPACCESS),
+                _parsed_tag.to_string()
+            );
+        }
+
+        let res = seed.deserialize(&mut *self.deserializer);
+        res
+    }
 }
 
-impl<'de, R: Read<'de>, S> Deserializer<R, S> {
-    pub fn new(read: R, is_human_readable: bool, schema: S) -> Self {
+const NAME_DESERIALIZER: &str = "Deserializer";
+pub struct Deserializer<R, X> {
+    pub(crate) read: R,
+    phantom: std::marker::PhantomData<X>,
+}
+impl<'de, R: Read<'de>, X> Display for Deserializer<R, X> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.read.fmt(f)
+    }
+}
+impl<'de, R: Read<'de>, X> std::fmt::Debug for Deserializer<R, X> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.read.fmt(f)
+    }
+}
+impl<'de, R: Read<'de>, X> Deserializer<R, X> {
+    pub fn new(read: R) -> Self {
         Deserializer {
             read,
-            is_human_readable,
-            _schema: schema,
+            phantom: std::marker::PhantomData,
         }
     }
     #[inline]
@@ -91,8 +177,8 @@ impl<'de, R: Read<'de>, S> Deserializer<R, S> {
         std::str::from_utf8(slice).map_err(|_| Error::Message(format!("Invalid Utf8 {:?}", String::from_utf8_lossy(slice))))
     }
 }
-impl<'de, S> Deserializer<SliceRead<'de>, S> {}
-impl<'de, R: Read<'de>, S> Deserializer<R, S> {
+impl<'de, X> Deserializer<SliceRead<'de>, X> {}
+impl<'de, R: Read<'de>, X> Deserializer<R, X> {
     /// The [Self::end] should be called after a value is fully deserialized to check if there are any trailing bytes.
     pub fn end(&mut self) -> Result<()> {
         if self.read.is_end()? {
@@ -103,7 +189,7 @@ impl<'de, R: Read<'de>, S> Deserializer<R, S> {
     }
 }
 
-impl<'de, 'a, R: Read<'de>, S: Schema> de::Deserializer<'de> for &'a mut Deserializer<R, S> {
+impl<'de, 'a, R: Read<'de>, X: Schema> de::Deserializer<'de> for &'a mut Deserializer<R, X> {
     type Error = Error;
 
     impl_deserialize_unsigned!(deserialize_u64, deserialize_u32, deserialize_u16, deserialize_u8);
@@ -137,24 +223,21 @@ impl<'de, 'a, R: Read<'de>, S: Schema> de::Deserializer<'de> for &'a mut Deseria
             _ => Err(Error::Message(format!("Invalid bool value {:?}", String::from_utf8_lossy(slice)))),
         }
     }
-
     fn deserialize_newtype_struct<V: de::Visitor<'de>>(self, _name: &'static str, visitor: V) -> Result<V::Value> {
         #[cfg(debug_assertions)]
         log::trace!("{:<50} {}", format!("{}::deserialize_newtype_struct", NAME_DESERIALIZER), _name);
 
         visitor.visit_newtype_struct(self)
     }
-
     fn deserialize_struct<V: de::Visitor<'de>>(self, name: &'static str, fields: &'static [&'static str], visitor: V) -> Result<V::Value> {
         #[cfg(debug_assertions)]
         log::trace!("{:<50} {}", format!("{}::deserialize_struct", NAME_DESERIALIZER), name);
-        if name == "Header" {
-            visitor.visit_map(TagSectionMapAccess::new(self, name, fields))
+        if name.starts_with("Header") || name.starts_with("Tagged") {
+            visitor.visit_map(StrictMapAccess::new(self, name, fields))
         } else {
-            visitor.visit_map(BasicTagValueMapAccess::new(self))
+            visitor.visit_map(GreedyMapAccess::new(self))
         }
     }
-
     fn deserialize_enum<V: de::Visitor<'de>>(self, _name: &'static str, _variants: &'static [&'static str], visitor: V) -> Result<V::Value> {
         visitor.visit_enum(EnumAccess::new(self))
     }
@@ -171,7 +254,6 @@ impl<'de, 'a, R: Read<'de>, S: Schema> de::Deserializer<'de> for &'a mut Deseria
         // );
         visitor.visit_bytes(peeked_tag)
     }
-
     /// Will forward to [Self::deserialize_seq] if the peeked tag is a repeating group.
     /// Will forward to [Self::deserialize_bytes] if the peeked tag is a Len/Data binary section.
     fn deserialize_seq<V: de::Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
@@ -187,7 +269,7 @@ impl<'de, 'a, R: Read<'de>, S: Schema> de::Deserializer<'de> for &'a mut Deseria
         }
 
         match self.read.last_peeked_tag() {
-            Some(tag) => match S::lookup(tag) {
+            Some(tag) => match X::lookup(tag) {
                 // if foudn we are looking at binary pair otherwise it is a repeating group
                 // Some(TagType::BinaryData { tag_data, .. }) => {
                 Some(BinaryDataLenPair { tag_data, .. }) => {
@@ -254,6 +336,6 @@ impl<'de, 'a, R: Read<'de>, S: Schema> de::Deserializer<'de> for &'a mut Deseria
         deserialize_tuple_struct(self, _name: &'static str, _len: usize, _visitor: V)
     );
     fn is_human_readable(&self) -> bool {
-        self.is_human_readable
+        false
     }
 }

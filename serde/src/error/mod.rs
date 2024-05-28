@@ -26,7 +26,7 @@ pub enum Error {
     InvalidInteger,
     InvalidFixFrame(IssueAtPosition),
     NotSupported(&'static str),
-    TODO,
+    InvalidChecksum(IssueAtPosition),
 }
 impl std::error::Error for Error {}
 impl serde::ser::Error for Error {
@@ -50,9 +50,9 @@ impl std::fmt::Display for Error {
             Error::UnexpectedEof(pos) => write!(f, "UnexpectedEof: {:?}", pos),
             Error::EmptyValue(pos) => write!(f, "EmptyValue {:?}", pos),
             Error::InvalidInteger => write!(f, "InvalidInteger"),
-            Error::TODO => write!(f, "TODO"),
             Error::NotSupported(s) => write!(f, "NotSupported: {}", s),
             Error::InvalidFixFrame(pos) => write!(f, "InvalidFixFrame {:?}", pos),
+            Error::InvalidChecksum(pos) => write!(f, "InvalidChecksum {:?}", pos),
         }
     }
 }

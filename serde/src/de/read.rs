@@ -117,7 +117,7 @@ impl<'origin> SliceRead<'origin> {
             }
         }
     }
-    ///
+
     fn seek_tag(&mut self) -> Option<&'origin [u8]> {
         if self.idx_current < self.idx_last_seek_eqs {
             self.last_seek_tag

@@ -64,9 +64,10 @@ pub mod setup {
 
                             let thread = std::thread::current();
                             let id = thread.id();
-                            let mut name = thread.name().unwrap_or(format!("Thread-{id:?}").as_str()).to_owned();
+                            let name = format!("Thread-{id:?}");
+                            let mut name = thread.name().unwrap_or(name.as_str());
                             if name.contains("::") {
-                                name = "main-Thread".to_owned();
+                                name = "main-Thread";
                             }
 
                             writeln!(buf, "{ts} {level} ({name}) {first}::*::{last} {args}")

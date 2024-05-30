@@ -174,7 +174,7 @@ impl From<(&RFMessageDef, &RFModel)> for MessageTokenParts {
             MessageCategory::Admin | MessageCategory::App => {
                 let is_app = matches!(r_msg_def.msg_category, MessageCategory::App);
                 msg_impls.extend(quote!(
-                    impl #generic_names fix_model_core::prelude::MsgTypeCode for #name #generic_names where #serialize_trait_bounds {
+                    impl #generic_names fix_model_core::prelude::MsgTypeCode for #name #generic_names {
                         const MSG_TYPE_CODE: &'static str = #msg_type;
                         #[inline]
                         fn is_app(&self) -> bool {

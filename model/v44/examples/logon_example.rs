@@ -14,11 +14,10 @@ fn test_example() {
 fn example() {
     setup::log::configure_level(log::LevelFilter::Info);
 
-    let mut frame_enchoder = FrameEnchoder::with_capacity(1024, Header1EnvelopeSequence::new("FIX.4.4".into()));
+    let mut frame_enchoder = FrameEnchoder::with_capacity(1024, Header1EnvelopeSequence::new("FIX.4.4".to_owned().into()));
 
-    let comp_ids = Header2CompIdSequence::new("sender_comp_id".into(), "target_comp_id".into());
+    let comp_ids = Header2CompIdSequence::new("sender_comp_id".to_owned().into(), "target_comp_id".to_owned().into());
     let header = Header3OperationalSequence::<&str, &dat> {
-        // target_sub_id: Some("target_sub_id".into()),
         sending_time: "yyyyMMdd-HH:mm:ss.SSS".into(),
         ..Default::default()
     };
@@ -29,8 +28,7 @@ fn example() {
     };
     info!("msg: {:?}", msg);
 
-    frame_enchoder.serialize(&comp_ids, &header, &msg).unwrap();
-    let ser = frame_enchoder.envelope(true).unwrap();
+    let ser = frame_enchoder.serialize(&comp_ids, &header, &msg, true).unwrap();
     info!("ser: {:?}", ser);
 
     let mut frame_decoder = FrameDecoder::new(&ser);

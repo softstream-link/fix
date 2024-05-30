@@ -2,7 +2,7 @@ use bytes::BytesMut;
 use fix_model_core::types::dat::dat;
 use fix_model_test::unittest::setup;
 use fix_serde::prelude::*;
-use fix_serde::unittest::{AdminMsg, EncryptMethod, Header3, HeartBtInt, Logon, UnitTestSchema};
+use fix_serde::unittest::{MsgAdm, EncryptMethod, Header3, HeartBtInt, Logon, UnitTestSchema};
 use log::info;
 
 #[test]
@@ -118,8 +118,7 @@ fn test_send_recv_frame_msg() {
     let (adm, _) = decoder.deserialize_msg::<&str, char, &dat>().unwrap();
     info!("adm: {:?}", adm);
     match adm.unwrap() {
-        AdminMsg::Logon(logon_out) => {
-            info!("logon_out: {:?}", logon_out);
+        MsgAdm::Logon(logon_out) => {
             assert_eq!(logon_inp, logon_out);
         }
     }

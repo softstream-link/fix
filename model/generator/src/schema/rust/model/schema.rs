@@ -72,7 +72,7 @@ impl From<&SchemaDef> for TokenStream {
             pub struct #name;
             #[allow(unused_doc_comments)]
             impl fix_model_core::prelude::Schema for #name {
-                type Header<'de, S: serde::Deserialize<'de> + serde::Serialize, C: serde::Deserialize<'de> + serde::Serialize, D: serde::Deserialize<'de> + serde::Serialize> = Header3OperationalSequence<S, D>;
+                type Header<'de, S, C, D> = Header3OperationalSequence<S, D>;
                 type AdmType<S, C, D> = MsgAdm<S, D>;
                 type AppType<S, C, D> = MsgApp<S, C, D>;
                 fn binary_data_len_pair_index() -> fix_model_core::prelude::TagTypesSorted {
@@ -93,8 +93,9 @@ impl From<&SchemaDef> for TokenStream {
                     D: serde::Deserialize<'de>,
                 {
                     use serde::Deserialize;
+                    use fix_model_core::prelude::MsgTypeCode;
                     match msg_type {
-                        "A" => Ok((Some(MsgAdm::<S, D>::Logon(Logon::deserialize(deserializer)?)), None)),
+                        Logon::<S, D>::MSG_TYPE_CODE => Ok((Some(MsgAdm::<S, D>::Logon(Logon::deserialize(deserializer)?)), None)),
                         _ => Err(serde::de::Error::custom(format!("unknown msg_type: {}", msg_type))),
                     }
                 }

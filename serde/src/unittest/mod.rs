@@ -3,9 +3,8 @@ use crate::{
     ser::{serializer::Serializer, write::BytesWrite},
 };
 use fix_model_core::{
-    prelude::{Schema, TagTypesSorted},
+    prelude::{Header, MsgTypeCode, Schema, TagTypesSorted},
     schema::BinaryDataLenPair,
-    types::fixmsgtype::{Header, MsgTypeCode},
 };
 
 use serde::{de::Error, Deserialize, Serialize};
@@ -14,7 +13,7 @@ pub struct UnitTestSchema;
 
 impl Schema for UnitTestSchema {
     type Header<'a, S, C, D> = Header3<S>;
-    type AdmType<S, C, D> = AdminMsg<S>;
+    type AdmType<S, C, D> = MsgAdm<S>;
     type AppType<S, C, D> = ();
 
     fn binary_data_len_pair_index() -> TagTypesSorted {
@@ -35,8 +34,7 @@ impl Schema for UnitTestSchema {
         D: serde::Deserialize<'de>,
     {
         match msg_type {
-            Logon::<S>::MSG_TYPE_CODE => Ok((Some(AdminMsg::<S>::Logon(Logon::deserialize(deserializer)?)), None)),
-            // "A" => Ok((Some(AdminMsg::<S>::Logon(Logon::deserialize(deserializer)?)), None)),
+            Logon::<S>::MSG_TYPE_CODE => Ok((Some(MsgAdm::<S>::Logon(Logon::deserialize(deserializer)?)), None)),
             _ => Err(Error::custom(format!("unknown msg_type: {}", msg_type))),
         }
     }
@@ -75,7 +73,7 @@ impl<S> MsgTypeCode for Logon<S> {
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub enum AdminMsg<S> {
+pub enum MsgAdm<S> {
     Logon(Logon<S>),
 }
 

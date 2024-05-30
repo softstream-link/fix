@@ -134,7 +134,7 @@ impl RFModel {
                 fix_serde::prelude::to_bytes_with_schema::<_,#schema_name>(value, capacity)
             }
            
-            pub type FrameEnchoder<S> = fix_serde::prelude::FrameEnchoder<S, #schema_name >;
+            pub type FrameEnchoder = fix_serde::prelude::FrameEnchoder<#schema_name >;
             pub type FrameDecoder<'de> = fix_serde::prelude::FrameDecoder<'de, #schema_name >;
 
         );

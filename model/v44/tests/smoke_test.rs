@@ -9,7 +9,9 @@ use log::info;
 fn test_tag_value_plain() {
     setup::log::configure_level(log::LevelFilter::Info);
 
-    let msg = TagValueAccount::<String> { account: "account".to_owned().into() };
+    let msg = TagValueAccount::<String> {
+        account: "account".to_owned().into(),
+    };
     info!("msg: {:?}", msg);
 
     let fix = fix_model_v44::to_fix(&msg, None).unwrap();

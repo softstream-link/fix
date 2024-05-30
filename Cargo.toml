@@ -1,7 +1,7 @@
 [workspace]
 members = [
-    # "model/v42",
-    # "model/v44",
+    "model/v42",
+    "model/v44",
     "serde",
     "model/test",
     "model/generator",

@@ -35,7 +35,8 @@ impl Schema for UnitTestSchema {
         D: serde::Deserialize<'de>,
     {
         match msg_type {
-            "A" => Ok((Some(AdminMsg::<S>::Logon(Logon::deserialize(deserializer)?)), None)),
+            Logon::<S>::MSG_TYPE_CODE => Ok((Some(AdminMsg::<S>::Logon(Logon::deserialize(deserializer)?)), None)),
+            // "A" => Ok((Some(AdminMsg::<S>::Logon(Logon::deserialize(deserializer)?)), None)),
             _ => Err(Error::custom(format!("unknown msg_type: {}", msg_type))),
         }
     }

@@ -133,12 +133,9 @@ impl RFModel {
             pub fn to_fix<T: serde::Serialize>(value: &T, capacity: Option<usize>) -> fix_serde::prelude::Result<fix_serde::prelude::Serializer<fix_serde::prelude::BytesWrite, #schema_name>> {
                 fix_serde::prelude::to_bytes_with_schema::<_,#schema_name>(value, capacity)
             }
-            // pub fn frame_echoder(capacity: usize, header1: fix_serde::prelude::Header1EnvelopeSequence, header2: fix_serde::prelude::Header2TypeCompIdSequence) -> fix_serde::prelude::FrameEnchoder< #schema_name > {
-            //     fix_serde::prelude::FrameEnchoder::<_, #schema_name>::with_capacity(capacity, header1, header2)
-            // }
-            // pub fn frame_decoder(frame: &'de [u8]) -> fix_serde::prelude::FrameDecoder<'de, #schema_name>{
-            //     fix_serde::prelude::FrameDecoder::< #schema_name >::new(frame)
-            // }
+           
+            pub type FrameEnchoder<S> = fix_serde::prelude::FrameEnchoder<S, #schema_name >;
+            pub type FrameDecoder<'de> = fix_serde::prelude::FrameDecoder<'de, #schema_name >;
 
         );
         format_token_stream(&quote! {

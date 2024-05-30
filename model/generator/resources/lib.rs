@@ -5,9 +5,6 @@ pub use fix_serde::prelude::{Header2CompIdSequence, Header2TypeCompIdSequence, M
 
 pub use fix_serde::prelude::CheckSum;
 
-pub type FrameEnchoder<S> = fix_serde::prelude::FrameEnchoder<S, Fix44Schema>;
-pub type FrameDecoder<'de> = fix_serde::prelude::FrameDecoder<'de, Fix44Schema>;
-
 include!(concat!(env!("OUT_DIR"), "/fields.rs"));
 include!(concat!(env!("OUT_DIR"), "/messages_defs.rs"));
 include!(concat!(env!("OUT_DIR"), "/messages_impls.rs"));

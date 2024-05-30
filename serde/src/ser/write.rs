@@ -29,6 +29,7 @@ pub struct BytesWrite {
     write_soh_issued: bool,
 }
 impl BytesWrite {
+    #[inline]
     pub fn new(bytes: BytesMut) -> Self {
         Self {
             bytes,
@@ -47,11 +48,14 @@ impl BytesWrite {
         self.last_tag = other.last_tag;
         self.write_soh_issued = other.write_soh_issued;
     }
-    pub fn reset(&mut self) {
-        self.bytes.clear();
-        self.last_tag = None;
-        self.write_soh_issued = false;
+    pub fn take(self) -> BytesMut {
+        self.bytes
     }
+    // pub fn reset(&mut self) {
+    //     self.bytes.clear();
+    //     self.last_tag = None;
+    //     self.write_soh_issued = false;
+    // }
 }
 impl Deref for BytesWrite {
     type Target = BytesMut;

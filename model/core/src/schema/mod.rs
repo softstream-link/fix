@@ -21,7 +21,7 @@ impl Display for BinaryDataLenPair {
 }
 
 pub trait Schema {
-    type Header<'de, S: serde::Deserialize<'de> + serde::Serialize, C: serde::Deserialize<'de> + serde::Serialize, D: serde::Deserialize<'de> + serde::Serialize>: serde::Deserialize<'de> + serde::Serialize;
+    type Header<'a, S, C, D>;
     type AdmType<S, C, D>;
     type AppType<S, C, D>;
     fn binary_data_len_pair_index_lookup(tag: &[u8]) -> Option<BinaryDataLenPair> {
@@ -49,8 +49,7 @@ pub trait Schema {
 }
 pub struct NoBinaryDataSchema;
 impl Schema for NoBinaryDataSchema {
-    type Header<'de, S: serde::Deserialize<'de> + serde::Serialize, C: serde::Deserialize<'de> + serde::Serialize, D: serde::Deserialize<'de> + serde::Serialize> = ();
-    // type Header<'de, S: serde::Deserialize<'de>, C: serde::Deserialize<'de>, D: serde::Deserialize<'de>> = ();
+    type Header<'a, S, C, D> = ();
     type AdmType<S, C, D> = ();
     type AppType<S, C, D> = ();
     fn binary_data_len_pair_index() -> TagTypesSorted {
@@ -68,13 +67,4 @@ impl Schema for NoBinaryDataSchema {
     {
         Ok((None, None))
     }
-    // fn deserializer_header<'de, __D, S, C, D>(_deserializer: __D) -> std::result::Result<Self::Header<'de, S, C, D>, __D::Error>
-    // where
-    //     __D: serde::Deserializer<'de>,
-    //     S: serde::Deserialize<'de>,
-    //     C: serde::Deserialize<'de>,
-    //     D: serde::Deserialize<'de>,
-    // {
-    //     Ok(())
-    // }
 }

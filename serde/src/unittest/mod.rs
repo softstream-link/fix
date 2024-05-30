@@ -13,7 +13,7 @@ use serde::{de::Error, Deserialize, Serialize};
 pub struct UnitTestSchema;
 
 impl Schema for UnitTestSchema {
-    type Header<'de, S: Deserialize<'de> + Serialize, C: Deserialize<'de> + Serialize, D: Deserialize<'de> + Serialize> = Header3<S>;
+    type Header<'a, S, C, D> = Header3<S>;
     type AdmType<S, C, D> = AdminMsg<S>;
     type AppType<S, C, D> = ();
 
@@ -40,15 +40,6 @@ impl Schema for UnitTestSchema {
             _ => Err(Error::custom(format!("unknown msg_type: {}", msg_type))),
         }
     }
-    // fn deserializer_header<'de, __D, S, C, D>(deserializer: __D) -> std::result::Result<Self::Header<'de, S, C, D>, __D::Error>
-    // where
-    //     __D: serde::Deserializer<'de>,
-    //     S: serde::Deserialize<'de>,
-    //     C: serde::Deserialize<'de>,
-    //     D: serde::Deserialize<'de>,
-    // {
-    //     Self::Header::<'de, S, C, D>::deserialize(deserializer)
-    // }
 }
 
 fix_model_generator::prelude::fix_usize!(EncryptMethod, 98);

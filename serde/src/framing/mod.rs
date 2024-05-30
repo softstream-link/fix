@@ -62,7 +62,7 @@ impl Serialize for TaggedBodyLength {
 pub struct TaggedMsgType<S> {
     #[serde(rename = "35")]
     #[serde(alias = "MsgType")]
-    msg_type: MsgType<S>,
+    pub msg_type: MsgType<S>,
 }
 impl<S: serde::Serialize> Serialize for TaggedMsgType<S> {
     #[inline]

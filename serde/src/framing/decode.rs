@@ -101,24 +101,29 @@ impl<'de, X: Schema> FrameDecoder<'de, X> {
         }
     }
 
-    pub fn deserialize_header3(&mut self) -> Result<&X::Header<'de, &'de str, char, &'de dat>> {
+    pub fn deserialize_header3(&mut self) -> Result<&X::Header<'de, &'de str, char, &'de dat>>
+    where
+        <X as Schema>::Header<'de, &'de str, char, &'de dat>: Deserialize<'de>,
+    {
         let _header2 = self.deserialize_header2()?;
         match self.header3 {
             Some(ref header3) => Ok(header3),
             None => {
-                let header3 = X::Header::deserialize(self.deserializer.as_mut().expect("split should have assigned a deserializer"))?;
+                // let header3 = X::Header::deserialize(self.deserializer.as_mut().expect("split should have assigned a deserializer"))?;
+                // let header3 = X::Header::<'_, _, _, _>::deserialize(self.deserializer.as_mut().expect("split should have assigned a deserializer"))?;
+                let header3 = self.deserialize::<X::Header<'_, _, _, _>>()?;
                 self.header3 = Some(header3);
                 Ok(self.header3.as_ref().unwrap())
             }
         }
-        // let des = self.deserializer.as_mut().expect("split should have assigned a deserializer");
-        // X::Header::deserialize(des)
     }
     pub fn deserialize_msg<S, C, D>(&mut self) -> Result<(Option<X::AdmType<S, C, D>>, Option<X::AppType<S, C, D>>)>
     where
         S: serde::Deserialize<'de>,
         C: serde::Deserialize<'de>,
         D: serde::Deserialize<'de>,
+        <X as Schema>::Header<'de, &'de str, char, &'de dat>: Deserialize<'de>,
+
     {
         let _header3 = self.deserialize_header3()?;
 

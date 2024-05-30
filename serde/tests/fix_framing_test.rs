@@ -40,24 +40,32 @@ fn test_send_recv_frame() {
 
     info!("logon_inp: {:?}", logon_inp);
 
-    let header1 = Header1EnvelopeSequence::new("FIX.4.4".into());
-    let mut enchoder = FrameEnchoder::<_, UnitTestSchema>::with_capacity(1024, header1);
+    let mut enchoder = FrameEnchoder::<UnitTestSchema>::with_capacity(1024, Header1EnvelopeSequence::new("FIX.4.4".to_owned().into()));
 
-    let header2 = Header2CompIdSequence::new("source".into(), "dest".into());
-    let header3 = Header3 {
-        on_behalf_of_comp_id: "on_behalf_of_comp_id".into(),
+    let comp_ids = Header2CompIdSequence::new("source".to_owned().into(), "dest".to_owned().into());
+
+    // ser 1
+    let header = Header3 {
+        on_behalf_of_comp_id: "on_behalf_of_comp_id1".into(),
     };
-    enchoder.serialize(&header2, &header3, &logon_inp).unwrap();
-    let ser = enchoder.envelope(true).unwrap();
-    info!("ser: {:?}", ser);
+    let ser = enchoder.serialize(&comp_ids, &header, &logon_inp, true).unwrap();
+    info!("ser: {}", ser);
+
+    // ser 2
+    let header3 = Header3 {
+        on_behalf_of_comp_id: "on_behalf_of_comp_id2".into(),
+    };
+    let ser = enchoder.serialize(&comp_ids, &header3, &logon_inp, true).unwrap();
+    info!("ser: {}", ser);
 
     let mut decoder = FrameDecoder::<UnitTestSchema>::new(&ser);
     let check_sum = decoder.validate_check_sum().unwrap();
-    assert_eq!(check_sum, 19);
+    assert_eq!(check_sum, 70);
+
     let header1 = decoder.deserialize_header1().unwrap();
     info!("header1: {:?}", header1);
     assert_eq!(header1.begin_string, "FIX.4.4".into());
-    assert_eq!(header1.body_length, 73.into());
+    assert_eq!(header1.body_length, 74.into());
     decoder.complete().unwrap_err(); // still more to dserialize hence should fail
 
     let header2 = decoder.deserialize_header2().unwrap();
@@ -68,7 +76,7 @@ fn test_send_recv_frame() {
 
     let header3 = decoder.deserialize_header3().unwrap();
     info!("header3: {:?}", header3);
-    assert_eq!(header3.on_behalf_of_comp_id, "on_behalf_of_comp_id".into());
+    assert_eq!(header3.on_behalf_of_comp_id, "on_behalf_of_comp_id2".into());
     decoder.complete().unwrap_err(); // still more to dserialize hence should fail
 
     // should complete the frame by ignoring header3
@@ -90,15 +98,14 @@ fn test_send_recv_frame_msg() {
 
     info!("logon_inp: {:?}", logon_inp);
 
-    let header1 = Header1EnvelopeSequence::new("FIX.4.4".into());
-    let mut enchoder = FrameEnchoder::<_, UnitTestSchema>::with_capacity(1024, header1);
+    let header1 = Header1EnvelopeSequence::new("FIX.4.4".to_owned().into());
+    let mut enchoder = FrameEnchoder::<UnitTestSchema>::with_capacity(1024, header1);
 
-    let header2 = Header2CompIdSequence::new("source".into(), "dest".into());
+    let header2 = Header2CompIdSequence::new("source".to_owned().into(), "dest".to_owned().into());
     let header3 = Header3 {
         on_behalf_of_comp_id: "on_behalf_of_comp_id".into(),
     };
-    enchoder.serialize(&header2, &header3, &logon_inp).unwrap();
-    let ser = enchoder.envelope(true).unwrap();
+    let ser = enchoder.serialize(&header2, &header3, &logon_inp, true).unwrap();
     info!("ser: {:?}", ser);
 
     ///////////////////////////

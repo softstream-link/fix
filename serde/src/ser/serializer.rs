@@ -14,22 +14,23 @@ use std::{
 };
 
 const NAME_SERIALIZER: &str = "Serializer";
-pub struct Serializer<W, S> {
+pub struct Serializer<W, X> {
     write: W,
-    phantom: std::marker::PhantomData<S>,
+    phantom: std::marker::PhantomData<X>,
 }
-impl<W: Write, S: Schema> Serializer<W, S> {
+impl<W: Write, X: Schema> Serializer<W, X> {
+    #[inline]
     pub fn new(write: W) -> Self {
         Self {
             write,
             phantom: std::marker::PhantomData,
         }
     }
-    #[inline(always)]
+    #[inline]
     pub fn serialize_soh(&mut self) -> Result<()> {
         self.write.write_soh()
     }
-    #[inline(always)]
+    #[inline]
     pub fn serialize_eqs(&mut self) -> Result<()> {
         self.write.write_eqs()
     }
@@ -37,39 +38,39 @@ impl<W: Write, S: Schema> Serializer<W, S> {
         self.write
     }
 }
-impl<S> From<Serializer<BytesWrite, S>> for BytesMut {
-    fn from(serializer: Serializer<BytesWrite, S>) -> Self {
+impl<X> From<Serializer<BytesWrite, X>> for BytesMut {
+    fn from(serializer: Serializer<BytesWrite, X>) -> Self {
         serializer.write.into()
     }
 }
-impl<S> Serializer<BytesWrite, S> {
+impl<X> Serializer<BytesWrite, X> {
     pub fn as_slice(&self) -> &[u8] {
         self
     }
     pub fn join(&mut self, other: Self) {
         self.write.join(other.write);
     }
-    pub fn reset(&mut self) {
-        self.write.reset();
+    pub fn take(self) -> BytesMut {
+        self.write.take()
     }
 }
-impl<S> Deref for Serializer<BytesWrite, S> {
+impl<X> Deref for Serializer<BytesWrite, X> {
     type Target = BytesWrite;
     fn deref(&self) -> &Self::Target {
         &self.write
     }
 }
-impl<W: Write, S> Display for Serializer<W, S> {
+impl<W: Write, X> Display for Serializer<W, X> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.write.fmt(f)
     }
 }
-impl<W: Write, S> Debug for Serializer<W, S> {
+impl<W: Write, X> Debug for Serializer<W, X> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.write.fmt(f)
     }
 }
-impl<W: Write, S: Schema> ser::Serializer for &mut Serializer<W, S> {
+impl<W: Write, X: Schema> ser::Serializer for &mut Serializer<W, X> {
     type Ok = ();
     type Error = Error;
     type SerializeSeq = Self;
@@ -258,7 +259,7 @@ impl<W: Write, S: Schema> ser::Serializer for &mut Serializer<W, S> {
                 //     None => {}
                 // }
                 if let Some(tag) = self.write.last_written_tag() {
-                    match S::binary_data_len_pair_index_lookup(tag) {
+                    match X::binary_data_len_pair_index_lookup(tag) {
                         // We are looking at binary data and hence need to add data with equal sign '<dat_tag>=' SerialieSeq::
                         Some(BinaryDataLenPair { tag_len: _, tag_data }) => {
                             self.write.write_tag(tag_data)?;
@@ -283,7 +284,7 @@ impl<W: Write, S: Schema> ser::Serializer for &mut Serializer<W, S> {
     }
 }
 
-impl<W: Write, S: Schema> ser::SerializeSeq for &mut Serializer<W, S> {
+impl<W: Write, X: Schema> ser::SerializeSeq for &mut Serializer<W, X> {
     type Ok = ();
     type Error = Error;
 
@@ -308,7 +309,7 @@ impl<W: Write, S: Schema> ser::SerializeSeq for &mut Serializer<W, S> {
         Ok(())
     }
 }
-impl<W: Write, S: Schema> ser::SerializeStruct for &mut Serializer<W, S> {
+impl<W: Write, X: Schema> ser::SerializeStruct for &mut Serializer<W, X> {
     type Ok = ();
     type Error = Error;
 
@@ -325,7 +326,7 @@ impl<W: Write, S: Schema> ser::SerializeStruct for &mut Serializer<W, S> {
         Ok(())
     }
 }
-impl<W: Write, S: Schema> ser::SerializeTupleStruct for &mut Serializer<W, S> {
+impl<W: Write, X: Schema> ser::SerializeTupleStruct for &mut Serializer<W, X> {
     type Ok = ();
     type Error = Error;
 
@@ -339,7 +340,7 @@ impl<W: Write, S: Schema> ser::SerializeTupleStruct for &mut Serializer<W, S> {
 }
 
 // NOT IMPLEMENTED
-impl<W: Write, S: Schema> ser::SerializeTuple for &mut Serializer<W, S> {
+impl<W: Write, X: Schema> ser::SerializeTuple for &mut Serializer<W, X> {
     type Ok = ();
     type Error = Error;
 
@@ -355,7 +356,7 @@ impl<W: Write, S: Schema> ser::SerializeTuple for &mut Serializer<W, S> {
         Err(Error::NotSupported("SerializeTuple::end"))
     }
 }
-impl<W: Write, S: Schema> ser::SerializeStructVariant for &mut Serializer<W, S> {
+impl<W: Write, X: Schema> ser::SerializeStructVariant for &mut Serializer<W, X> {
     type Ok = ();
     type Error = Error;
 
@@ -375,7 +376,7 @@ impl<W: Write, S: Schema> ser::SerializeStructVariant for &mut Serializer<W, S> 
         Err(Error::NotSupported("SerializeStructVariant::end"))
     }
 }
-impl<W: Write, S: Schema> ser::SerializeMap for &mut Serializer<W, S> {
+impl<W: Write, X: Schema> ser::SerializeMap for &mut Serializer<W, X> {
     type Ok = ();
     type Error = Error;
 
@@ -397,7 +398,7 @@ impl<W: Write, S: Schema> ser::SerializeMap for &mut Serializer<W, S> {
         Err(Error::NotSupported("SerializeMap::end"))
     }
 }
-impl<W: Write, S: Schema> ser::SerializeTupleVariant for &mut Serializer<W, S> {
+impl<W: Write, X: Schema> ser::SerializeTupleVariant for &mut Serializer<W, X> {
     type Ok = ();
     type Error = Error;
 

@@ -120,9 +120,9 @@ fn test_root_44_msgs() {
     for error in rf.errors() {
         log::error!("{}", error);
     }
+    let out_dir = env!("CARGO_TARGET_TMPDIR");
     assert_eq!(rf.errors().len(), 0);
     let fields_code = rf.fld_defs_to_code();
-    let out_dir = env!("CARGO_TARGET_TMPDIR");
     let out_path = Path::new(out_dir).join("fields_v44.rs");
     info!("out_path: {:?}", out_path);
     fs::write(&out_path, fields_code).unwrap();
@@ -151,7 +151,7 @@ fn test_root_44_msgs() {
     fs::write(&out_path, msg_enums).unwrap();
 
     let index_code = rf.schema_to_code();
-    let out_path = Path::new(out_dir).join("index_v44.rs");
+    let out_path = Path::new(out_dir).join("schema_v44.rs");
     info!("out_path: {:?}", out_path);
     fs::write(&out_path, index_code).unwrap();
 

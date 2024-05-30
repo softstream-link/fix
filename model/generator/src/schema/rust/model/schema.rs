@@ -1,3 +1,5 @@
+use super::root::RFModel;
+use crate::schema::rust::model::message::MessageCategory;
 use proc_macro2::Literal;
 use proc_macro2::TokenStream;
 use quote::format_ident;
@@ -60,14 +62,64 @@ impl PartialEq for IndexEntry {
 }
 impl Eq for IndexEntry {}
 
-pub struct SchemaDef {
+pub struct SchemaDef<'a> {
     pub name: String,
     pub entries: Vec<IndexEntry>,
+    pub rf_model: &'a RFModel,
 }
-impl From<&SchemaDef> for TokenStream {
+impl<'a> From<&SchemaDef<'a>> for TokenStream {
     fn from(index: &SchemaDef) -> TokenStream {
         let name = format_ident!("{}Schema", index.name);
         let entries = &index.entries;
+
+        let app_variants = index
+            .rf_model
+            .msg_defs
+            .iter()
+            .filter_map(|msg_def| {
+                if matches!(msg_def.msg_category, MessageCategory::App) {
+                    let name = format_ident!("{}", msg_def.name.as_str());
+                    let generic_names = msg_def.generics(index.rf_model).generic_names;
+                    if !generic_names.is_empty() {
+                        Some(quote! (
+                            #name::#generic_names::MSG_TYPE_CODE => Ok((None, Some(MsgApp::<S, C, D>::#name(#name::deserialize(deserializer)?)))
+                        )))
+                    } else {
+                        Some(quote! (
+                            #name::MSG_TYPE_CODE => Ok((None, Some(MsgApp::<S, C, D>::#name(#name::deserialize(deserializer)?)))
+                        )))
+                    }
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        let adm_variants = index
+            .rf_model
+            .msg_defs
+            .iter()
+            .filter_map(|msg_def| {
+                if matches!(msg_def.msg_category, MessageCategory::Admin) {
+                    let name = format_ident!("{}", msg_def.name.as_str());
+                    let generic_names = msg_def.generics(index.rf_model).generic_names;
+                    if !generic_names.is_empty() {
+                        // TODO dynamic generic resolution for enum which is a sum of all generics in messages
+                        Some(quote! (
+                            // Logon::<S, D>::MSG_TYPE_CODE      => Ok((Some(MsgAdm::<S, D>        ::Logon(Logon::deserialize(deserializer)?)), None)),
+                            #name::#generic_names::MSG_TYPE_CODE => Ok((Some(MsgAdm::<S, D>::#name(#name::deserialize(deserializer)?)), None))
+                        ))
+                    } else {
+                        Some(quote! (
+                            // Logon::MSG_TYPE_CODE      => Ok((Some(MsgAdm::<S, D>        ::Logon(Logon::deserialize(deserializer)?)), None)),
+                            #name::MSG_TYPE_CODE => Ok((Some(MsgAdm::<S, D>::#name(#name::deserialize(deserializer)?)), None))
+                        ))
+                    }
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
         quote! {
             pub struct #name;
             #[allow(unused_doc_comments)]
@@ -95,7 +147,8 @@ impl From<&SchemaDef> for TokenStream {
                     use serde::Deserialize;
                     use fix_model_core::prelude::MsgTypeCode;
                     match msg_type {
-                        Logon::<S, D>::MSG_TYPE_CODE => Ok((Some(MsgAdm::<S, D>::Logon(Logon::deserialize(deserializer)?)), None)),
+                        #(#adm_variants,)*
+                        #(#app_variants,)*
                         _ => Err(serde::de::Error::custom(format!("unknown msg_type: {}", msg_type))),
                     }
                 }
@@ -106,7 +159,7 @@ impl From<&SchemaDef> for TokenStream {
         }
     }
 }
-impl ToTokens for SchemaDef {
+impl<'a> ToTokens for SchemaDef<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         tokens.extend(Into::<TokenStream>::into(self));
     }

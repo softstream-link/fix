@@ -1,9 +1,9 @@
 use super::{
     field::{RFldDef, RFldDefRepGroup},
     format_token_stream,
-    schema::{SchemaDef, IndexEntry},
     message::{MessageTokenParts, RFMessageDef},
     repeating_group::RRepGrpMessageDef,
+    schema::{IndexEntry, SchemaDef},
 };
 use crate::{prelude::Error, schema::rust::model::message::MessageCategory};
 use proc_macro2::TokenStream;
@@ -133,7 +133,7 @@ impl RFModel {
             pub fn to_fix<T: serde::Serialize>(value: &T, capacity: Option<usize>) -> fix_serde::prelude::Result<fix_serde::prelude::Serializer<fix_serde::prelude::BytesWrite, #schema_name>> {
                 fix_serde::prelude::to_bytes_with_schema::<_,#schema_name>(value, capacity)
             }
-           
+
             pub type FrameEnchoder = fix_serde::prelude::FrameEnchoder<#schema_name >;
             pub type FrameDecoder<'de> = fix_serde::prelude::FrameDecoder<'de, #schema_name >;
 
@@ -151,6 +151,36 @@ impl RFModel {
     }
 
     fn schema_def(&self) -> SchemaDef {
+        // let app_msgs = self
+        //     .msg_defs
+        //     .iter()
+        //     .filter_map(|msg_def| {
+        //         if matches!(msg_def.msg_category, MessageCategory::App) {
+        //             Some(msg_def)
+        //             // let name = format_ident!("{}", msg_def.name.as_str());
+        //             // let generic_names = msg_def.generics(self).generic_names;
+        //             // Some(quote! (#name(#name #generic_names),))
+        //         } else {
+        //             None
+        //         }
+        //     })
+        //     .collect::<Vec<_>>();
+
+        // let adm_msgs = self
+        //     .msg_defs
+        //     .iter()
+        //     .filter_map(|msg_def| {
+        //         if matches!(msg_def.msg_category, MessageCategory::Admin) {
+        //             Some(msg_def)
+        //             // let name = format_ident!("{}", msg_def.name.as_str());
+        //             // let generic_names = msg_def.generics(self).generic_names;
+        //             // Some(quote! (#name(#name #generic_names),))
+        //         } else {
+        //             None
+        //         }
+        //     })
+        //     .collect::<Vec<_>>();
+
         let tags = self
             .fld_defs
             .iter()
@@ -169,9 +199,11 @@ impl RFModel {
             })
             .collect::<Vec<_>>();
         entries.sort();
+
         SchemaDef {
             name: self.name.clone(),
             entries,
+            rf_model: self,
         }
     }
 }

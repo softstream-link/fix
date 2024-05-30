@@ -48,7 +48,7 @@ fn test_send_recv_frame() {
         on_behalf_of_comp_id: "on_behalf_of_comp_id".into(),
     };
     enchoder.serialize(&header2, &header3, &logon_inp).unwrap();
-    let ser = enchoder.complete(true).unwrap();
+    let ser = enchoder.envelope(true).unwrap();
     info!("ser: {:?}", ser);
 
     let mut decoder = FrameDecoder::<UnitTestSchema>::new(&ser);
@@ -98,7 +98,7 @@ fn test_send_recv_frame_msg() {
         on_behalf_of_comp_id: "on_behalf_of_comp_id".into(),
     };
     enchoder.serialize(&header2, &header3, &logon_inp).unwrap();
-    let ser = enchoder.complete(true).unwrap();
+    let ser = enchoder.envelope(true).unwrap();
     info!("ser: {:?}", ser);
 
     ///////////////////////////

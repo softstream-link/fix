@@ -80,7 +80,6 @@ impl<S: serde::Serialize> Serialize for TaggedMsgType<S> {
     }
 }
 
-
 #[derive(serde::Deserialize, Debug, PartialEq, Clone)]
 pub struct TaggedSenderCompID<S> {
     #[serde(rename = "49")]
@@ -326,13 +325,6 @@ pub fn find_frame_end_with_begin_string_tag_value(buf: &[u8], begin_string_tag_v
 
 pub fn compute_check_sum(buf: &[u8]) -> u8 {
     (buf.iter().fold(0_usize, |acc, &b| acc.wrapping_add(b as usize)) % 256) as u8
-    // let check_sum_u8 = (buf.iter().fold(0_usize, |acc, &b| acc.wrapping_add(b as usize)) % 256) as u8;
-    // use std::io::Write;
-    // let mut buf = itoa::Buffer::new();
-    // let mut check_sum_bytes = [0_u8; 3];
-    // let value = buf.format(check_sum_u8);
-    // write!(&mut check_sum_bytes[..], "{:0>3}", value).unwrap();
-    // (check_sum_u8, check_sum_bytes)
 }
 
 #[cfg(test)]

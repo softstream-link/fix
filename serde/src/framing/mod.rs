@@ -1,5 +1,6 @@
-pub mod recv;
-pub mod send;
+pub mod decode;
+pub mod enchode;
+
 use crate::{
     de::read::SliceRead,
     prelude::{Error, Result},
@@ -11,8 +12,118 @@ fix_model_generator::fix_usize_fixed_length!(BodyLength, 9);
 fix_model_generator::fix_string!(MsgType, 35);
 fix_model_generator::fix_string!(SenderCompID, 49);
 fix_model_generator::fix_string!(TargetCompID, 56);
-
 fix_model_generator::fix_u8_fixed_length!(CheckSum, 10);
+
+#[derive(serde::Deserialize, Debug, PartialEq, Clone)]
+pub struct TaggedBeginString<S> {
+    #[serde(rename = "8")]
+    #[serde(alias = "BeginString")]
+    begin_string: BeginString<S>,
+}
+impl<S: serde::Serialize> Serialize for TaggedBeginString<S> {
+    #[inline]
+    fn serialize<__S: serde::Serializer>(&self, serializer: __S) -> std::result::Result<__S::Ok, __S::Error> {
+        use serde::ser::SerializeStruct;
+        if serializer.is_human_readable() {
+            let mut state = serializer.serialize_struct("TaggedBeginString", 1)?;
+            state.serialize_field("BeginString", &self.begin_string)?;
+            state.end()
+        } else {
+            let mut state = serializer.serialize_struct("TaggedBeginString", 1)?;
+            state.serialize_field("8", &self.begin_string)?;
+            state.end()
+        }
+    }
+}
+
+#[derive(serde::Deserialize, Debug, PartialEq, Clone)]
+pub struct TaggedBodyLength {
+    #[serde(rename = "9")]
+    #[serde(alias = "BodyLength")]
+    body_length: BodyLength,
+}
+impl Serialize for TaggedBodyLength {
+    #[inline]
+    fn serialize<__S: serde::Serializer>(&self, serializer: __S) -> std::result::Result<__S::Ok, __S::Error> {
+        use serde::ser::SerializeStruct;
+        if serializer.is_human_readable() {
+            let mut state = serializer.serialize_struct("TaggedBodyLength", 1)?;
+            state.serialize_field("BodyLength", &self.body_length)?;
+            state.end()
+        } else {
+            let mut state = serializer.serialize_struct("TaggedBodyLength", 1)?;
+            state.serialize_field("9", &self.body_length)?;
+            state.end()
+        }
+    }
+}
+
+#[derive(serde::Deserialize, Debug, PartialEq, Clone)]
+pub struct TaggedMsgType<S> {
+    #[serde(rename = "35")]
+    #[serde(alias = "MsgType")]
+    msg_type: MsgType<S>,
+}
+impl<S: serde::Serialize> Serialize for TaggedMsgType<S> {
+    #[inline]
+    fn serialize<__S: serde::Serializer>(&self, serializer: __S) -> std::result::Result<__S::Ok, __S::Error> {
+        use serde::ser::SerializeStruct;
+        if serializer.is_human_readable() {
+            let mut state = serializer.serialize_struct("TaggedMsgType", 1)?;
+            state.serialize_field("MsgType", &self.msg_type)?;
+            state.end()
+        } else {
+            let mut state = serializer.serialize_struct("TaggedMsgType", 1)?;
+            state.serialize_field("35", &self.msg_type)?;
+            state.end()
+        }
+    }
+}
+
+
+#[derive(serde::Deserialize, Debug, PartialEq, Clone)]
+pub struct TaggedSenderCompID<S> {
+    #[serde(rename = "49")]
+    #[serde(alias = "SenderCompID")]
+    sender_comp_id: SenderCompID<S>,
+}
+impl<S: serde::Serialize> Serialize for TaggedSenderCompID<S> {
+    #[inline]
+    fn serialize<__S: serde::Serializer>(&self, serializer: __S) -> std::result::Result<__S::Ok, __S::Error> {
+        use serde::ser::SerializeStruct;
+        if serializer.is_human_readable() {
+            let mut state = serializer.serialize_struct("TaggedSenderCompID", 1)?;
+            state.serialize_field("SenderCompID", &self.sender_comp_id)?;
+            state.end()
+        } else {
+            let mut state = serializer.serialize_struct("TaggedSenderCompID", 1)?;
+            state.serialize_field("49", &self.sender_comp_id)?;
+            state.end()
+        }
+    }
+}
+
+#[derive(serde::Deserialize, Debug, PartialEq, Clone)]
+pub struct TaggedTargetCompID<S> {
+    #[serde(rename = "56")]
+    #[serde(alias = "TargetCompID")]
+    target_comp_id: TargetCompID<S>,
+}
+impl<S: serde::Serialize> Serialize for TaggedTargetCompID<S> {
+    #[inline]
+    fn serialize<__S: serde::Serializer>(&self, serializer: __S) -> std::result::Result<__S::Ok, __S::Error> {
+        use serde::ser::SerializeStruct;
+        if serializer.is_human_readable() {
+            let mut state = serializer.serialize_struct("TaggedTargetCompID", 1)?;
+            state.serialize_field("TargetCompID", &self.target_comp_id)?;
+            state.end()
+        } else {
+            let mut state = serializer.serialize_struct("TaggedTargetCompID", 1)?;
+            state.serialize_field("56", &self.target_comp_id)?;
+            state.end()
+        }
+    }
+}
 
 #[derive(serde::Deserialize, Debug, PartialEq, Clone)]
 pub struct Header1EnvelopeSequence<S> {
@@ -25,6 +136,7 @@ pub struct Header1EnvelopeSequence<S> {
     pub body_length: BodyLength,
 }
 impl<S: serde::Serialize> Serialize for Header1EnvelopeSequence<S> {
+    #[inline]
     fn serialize<__S: serde::Serializer>(&self, serializer: __S) -> std::result::Result<__S::Ok, __S::Error> {
         use serde::ser::SerializeStruct;
         if serializer.is_human_readable() {
@@ -41,6 +153,7 @@ impl<S: serde::Serialize> Serialize for Header1EnvelopeSequence<S> {
     }
 }
 impl<S: AsRef<str>> Header1EnvelopeSequence<S> {
+    #[inline]
     pub fn new(begin_string: BeginString<S>) -> Self {
         Self {
             begin_string,
@@ -48,6 +161,7 @@ impl<S: AsRef<str>> Header1EnvelopeSequence<S> {
         }
     }
     #[allow(clippy::identity_op)]
+    #[inline]
     pub fn size(&self) -> usize {
         0
         + b"8=".len() + self.begin_string.as_ref().as_bytes().len() + b"".len() // BeginString
@@ -70,6 +184,7 @@ pub struct Header2TypeCompIdSequence<S> {
     pub target_comp_id: TargetCompID<S>,
 }
 impl<S: serde::Serialize> Serialize for Header2TypeCompIdSequence<S> {
+    #[inline]
     fn serialize<__S: serde::Serializer>(&self, serializer: __S) -> std::result::Result<__S::Ok, __S::Error> {
         use serde::ser::SerializeStruct;
         if serializer.is_human_readable() {
@@ -88,6 +203,7 @@ impl<S: serde::Serialize> Serialize for Header2TypeCompIdSequence<S> {
     }
 }
 impl<S: AsRef<str>> Header2TypeCompIdSequence<S> {
+    #[inline]
     pub fn new(msg_type: MsgType<S>, sender_comp_id: SenderCompID<S>, target_comp_id: TargetCompID<S>) -> Self {
         Self {
             msg_type,
@@ -106,13 +222,51 @@ impl<S: AsRef<str>> Header2TypeCompIdSequence<S> {
     }
 }
 
+#[derive(serde::Deserialize, Debug, PartialEq, Clone)]
+pub struct Header2CompIdSequence<S> {
+    #[serde(rename = "49")]
+    #[serde(alias = "SenderCompID")]
+    pub sender_comp_id: SenderCompID<S>,
+
+    #[serde(rename = "56")]
+    #[serde(alias = "TargetCompID")]
+    pub target_comp_id: TargetCompID<S>,
+}
+impl<S> Header2CompIdSequence<S> {
+    #[inline]
+    pub fn new(sender_comp_id: SenderCompID<S>, target_comp_id: TargetCompID<S>) -> Self {
+        Self {
+            sender_comp_id,
+            target_comp_id,
+        }
+    }
+}
+impl<S: serde::Serialize> Serialize for Header2CompIdSequence<S> {
+    #[inline]
+    fn serialize<__S: serde::Serializer>(&self, serializer: __S) -> std::result::Result<__S::Ok, __S::Error> {
+        use serde::ser::SerializeStruct;
+        if serializer.is_human_readable() {
+            let mut state = serializer.serialize_struct("Header2CompIdSequence", 2)?;
+            state.serialize_field("SenderCompID", &self.sender_comp_id)?;
+            state.serialize_field("TargetCompID", &self.target_comp_id)?;
+            state.end()
+        } else {
+            let mut state = serializer.serialize_struct("Header2CompIdSequence", 2)?;
+            state.serialize_field("49", &self.sender_comp_id)?;
+            state.serialize_field("56", &self.target_comp_id)?;
+            state.end()
+        }
+    }
+}
+
 #[derive(serde::Deserialize, serde::Serialize)]
-pub(super) struct TrailerCheckSum {
+pub(super) struct TaggedCheckSum {
     #[serde(rename = "10")]
     #[serde(alias = "CheckSum")]
     check_sum: CheckSum,
 }
-impl TrailerCheckSum {
+impl TaggedCheckSum {
+    #[inline]
     fn serialize<__S: serde::Serializer>(&self, serializer: __S) -> std::result::Result<__S::Ok, __S::Error> {
         use serde::ser::SerializeStruct;
         if serializer.is_human_readable() {

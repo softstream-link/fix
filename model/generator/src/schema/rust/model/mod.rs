@@ -1,7 +1,7 @@
 use std::iter::Sum;
 
 pub mod field;
-pub mod index;
+pub mod schema;
 pub mod message;
 pub mod message_member;
 pub mod repeating_group;

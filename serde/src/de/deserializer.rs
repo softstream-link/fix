@@ -138,7 +138,7 @@ impl<'de, 'a, R: Read<'de> + 'a, S: Schema> de::MapAccess<'de> for LazyMapAccess
         #[cfg(debug_assertions)]
         {
             log::trace!(
-                "{:<50} parased_tag: {:?} ",
+                "{:<50} parsed_tag: {:?} ",
                 format!("{}::next_value_seed", NAME_LAZY_MAPACCESS),
                 _parsed_tag.to_string()
             );
@@ -269,7 +269,7 @@ impl<'de, 'a, R: Read<'de>, X: Schema> de::Deserializer<'de> for &'a mut Deseria
         }
 
         match self.read.last_peeked_tag() {
-            Some(tag) => match X::lookup(tag) {
+            Some(tag) => match X::binary_data_len_pair_index_lookup(tag) {
                 // if foudn we are looking at binary pair otherwise it is a repeating group
                 // Some(TagType::BinaryData { tag_data, .. }) => {
                 Some(BinaryDataLenPair { tag_data, .. }) => {
@@ -303,14 +303,15 @@ impl<'de, 'a, R: Read<'de>, X: Schema> de::Deserializer<'de> for &'a mut Deseria
         }
     }
     fn deserialize_ignored_any<V: de::Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
+        let value = self.read.parse_value()?;
         #[cfg(debug_assertions)]
-        log::error!(
-            "{:<50} visitor: {}",
+        log::warn!(
+            "{:<50} parsed_val: {:?}, visitor: {}",
             format!("{}::deserialize_ignored_any", NAME_DESERIALIZER),
+            value.to_string(),
             std::any::type_name::<V>()
         );
-
-        visitor.visit_unit()
+        visitor.visit_bytes(value)
     }
     fn deserialize_option<V: de::Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
         // fix always has a value for optional fields, or entire key-value pair is missing

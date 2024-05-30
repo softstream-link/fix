@@ -10,6 +10,7 @@ pub trait MsgTypeCode {
         !self.is_app()
     }
 }
+pub trait Header {}
 
 #[cfg(test)]
 mod tests {

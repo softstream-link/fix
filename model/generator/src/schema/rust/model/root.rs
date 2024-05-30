@@ -1,7 +1,7 @@
 use super::{
     field::{RFldDef, RFldDefRepGroup},
     format_token_stream,
-    index::{IndexDef, IndexEntry},
+    schema::{SchemaDef, IndexEntry},
     message::{MessageTokenParts, RFMessageDef},
     repeating_group::RRepGrpMessageDef,
 };
@@ -118,8 +118,8 @@ impl RFModel {
         (repgrp_msgs, repgrp_impls)
     }
 
-    pub fn index_to_code(&self) -> String {
-        let index = &self.index();
+    pub fn schema_to_code(&self) -> String {
+        let index = &self.schema_def();
         format_token_stream(&quote! {
             #index
         })
@@ -133,6 +133,12 @@ impl RFModel {
             pub fn to_fix<T: serde::Serialize>(value: &T, capacity: Option<usize>) -> fix_serde::prelude::Result<fix_serde::prelude::Serializer<fix_serde::prelude::BytesWrite, #schema_name>> {
                 fix_serde::prelude::to_bytes_with_schema::<_,#schema_name>(value, capacity)
             }
+            // pub fn frame_echoder(capacity: usize, header1: fix_serde::prelude::Header1EnvelopeSequence, header2: fix_serde::prelude::Header2TypeCompIdSequence) -> fix_serde::prelude::FrameEnchoder< #schema_name > {
+            //     fix_serde::prelude::FrameEnchoder::<_, #schema_name>::with_capacity(capacity, header1, header2)
+            // }
+            // pub fn frame_decoder(frame: &'de [u8]) -> fix_serde::prelude::FrameDecoder<'de, #schema_name>{
+            //     fix_serde::prelude::FrameDecoder::< #schema_name >::new(frame)
+            // }
 
         );
         format_token_stream(&quote! {
@@ -147,7 +153,7 @@ impl RFModel {
         errors
     }
 
-    fn index(&self) -> IndexDef {
+    fn schema_def(&self) -> SchemaDef {
         let tags = self
             .fld_defs
             .iter()
@@ -166,7 +172,7 @@ impl RFModel {
             })
             .collect::<Vec<_>>();
         entries.sort();
-        IndexDef {
+        SchemaDef {
             name: self.name.clone(),
             entries,
         }

@@ -183,6 +183,11 @@ impl From<(&RFMessageDef, &RFModel)> for MessageTokenParts {
                     }
                 ));
             }
+            MessageCategory::Header => {
+                msg_impls.extend(quote!(
+                    impl #generic_names fix_model_core::prelude::Header for #name #generic_names where #serialize_trait_bounds {}
+                ));
+            }
             _ => {}
         }
 

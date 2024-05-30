@@ -98,7 +98,7 @@ fn test_root_42_msgs() {
     info!("out_path: {:?}", out_path);
     fs::write(&out_path, msg_enums).unwrap();
 
-    let index_code = rf.index_to_code();
+    let index_code = rf.schema_to_code();
     let out_path = Path::new(out_dir).join("index_v42.rs");
     info!("out_path: {:?}", out_path);
     fs::write(&out_path, index_code).unwrap();
@@ -150,7 +150,7 @@ fn test_root_44_msgs() {
     info!("out_path: {:?}", out_path);
     fs::write(&out_path, msg_enums).unwrap();
 
-    let index_code = rf.index_to_code();
+    let index_code = rf.schema_to_code();
     let out_path = Path::new(out_dir).join("index_v44.rs");
     info!("out_path: {:?}", out_path);
     fs::write(&out_path, index_code).unwrap();

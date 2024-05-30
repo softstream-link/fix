@@ -6,9 +6,11 @@ pub use crate::{
     to_bytes, to_bytes_with_schema,
 };
 
-pub use crate::framing::{recv::RecvFrame, send::SendFrame};
+pub use crate::framing::{decode::FrameDecoder, enchode::FrameEnchoder};
 
-pub use crate::framing::{BeginString, BodyLength, Header1EnvelopeSequence};
-pub use crate::framing::{Header2TypeCompIdSequence, MsgType, SenderCompID, TargetCompID};
+pub use crate::framing::{BeginString, BodyLength, Header1EnvelopeSequence, TaggedBeginString, TaggedBodyLength};
+pub use crate::framing::{
+    Header2CompIdSequence, Header2TypeCompIdSequence, MsgType, SenderCompID, TaggedMsgType, TaggedSenderCompID, TaggedTargetCompID, TargetCompID,
+};
 
 pub use crate::framing::CheckSum;

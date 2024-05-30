@@ -103,7 +103,7 @@ impl<'de, 'a, R: Read<'de> + 'a, S: Schema> de::MapAccess<'de> for RepeatingGrou
         #[cfg(debug_assertions)]
         {
             log::trace!(
-                "{:<50} parased_tag: {:?} ",
+                "{:<50} parsed_tag: {:?} ",
                 format!("{}::next_value_seed", NAME_REP_GROUP_MAPACCESS),
                 _parsed_tag.to_string()
             );

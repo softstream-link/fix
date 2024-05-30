@@ -1,6 +1,5 @@
 use fix_model_test::unittest::setup;
 use fix_serde::{
-    // de::rep_grp_deserializer::RepeatingGroupSeqAccess,
     unittest::{from_slice_unittest, to_bytes_unittest},
 };
 use log::info;

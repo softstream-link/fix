@@ -1,4 +1,4 @@
-// THIS IS A SYM LINK
+// THIS IS A SYM LINK IN SRC
 
 use fix_model_generator::prelude::*;
 use std::env;
@@ -32,6 +32,9 @@ fn main() {
     let fix_version: usize = std::env::var("CARGO_PKG_NAME").unwrap().replace("fix_model_v", "").parse().unwrap();
     let xml_name = format!("FIX-{}.{}.xml", fix_version / 10, fix_version % 10);
 
+    println!("cargo::rerun-if-changed=build.rs");
+    println!("cargo::rerun-if-changed=resources/{}", xml_name);
+
     let (inp_path, content) = resource_to_string!(xml_name.clone());
     cargo_info!(format!("fix model input: {:?}", inp_path));
 
@@ -56,8 +59,8 @@ fn main() {
     cargo_info!(format!("fix messages output: {:?}", out_path));
     fs::write(&out_path, messages_impls).unwrap();
 
-    let index_code = r_model.index_to_code();
-    let out_path = Path::new(&out_dir).join("index.rs");
+    let index_code = r_model.schema_to_code();
+    let out_path = Path::new(&out_dir).join("schema.rs");
     cargo_info!(format!("fix index output: {:?}", out_path));
     fs::write(&out_path, index_code).unwrap();
 
@@ -79,7 +82,4 @@ fn main() {
     let out_path = Path::new(&out_dir).join("helpers.rs");
     cargo_info!(format!("fix messages output: {:?}", out_path));
     fs::write(&out_path, helpers).unwrap();
-
-    println!("cargo::rerun-if-changed=build.rs");
-    println!("cargo::rerun-if-changed=resources/{}", xml_name);
 }

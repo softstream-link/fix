@@ -60,33 +60,52 @@ impl PartialEq for IndexEntry {
 }
 impl Eq for IndexEntry {}
 
-pub struct IndexDef {
+pub struct SchemaDef {
     pub name: String,
     pub entries: Vec<IndexEntry>,
 }
-impl From<&IndexDef> for TokenStream {
-    fn from(index: &IndexDef) -> TokenStream {
+impl From<&SchemaDef> for TokenStream {
+    fn from(index: &SchemaDef) -> TokenStream {
         let name = format_ident!("{}Schema", index.name);
         let entries = &index.entries;
         quote! {
             pub struct #name;
             #[allow(unused_doc_comments)]
             impl fix_model_core::prelude::Schema for #name {
-                fn index() -> fix_model_core::prelude::TagTypesSorted {
+                type Header<'de, S: serde::Deserialize<'de> + serde::Serialize, C: serde::Deserialize<'de> + serde::Serialize, D: serde::Deserialize<'de> + serde::Serialize> = Header3OperationalSequence<S, D>;
+                type AdmType<S, C, D> = MsgAdm<S, D>;
+                type AppType<S, C, D> = MsgApp<S, C, D>;
+                fn binary_data_len_pair_index() -> fix_model_core::prelude::TagTypesSorted {
                     static INDEX_PRE_SORTED_BY_TAG_LEN: fix_model_core::prelude::TagTypesSorted = &[
                         #(#entries),*
                     ];
                     INDEX_PRE_SORTED_BY_TAG_LEN
                 }
+
+                fn deserializer_msg<'de, __D, S, C, D>(
+                    msg_type: &str,
+                    deserializer: __D,
+                ) -> std::result::Result<(Option<Self::AdmType<S, C, D>>, Option<Self::AppType<S, C, D>>), __D::Error>
+                where
+                    __D: serde::Deserializer<'de>,
+                    S: serde::Deserialize<'de>,
+                    C: serde::Deserialize<'de>,
+                    D: serde::Deserialize<'de>,
+                {
+                    use serde::Deserialize;
+                    match msg_type {
+                        "A" => Ok((Some(MsgAdm::<S, D>::Logon(Logon::deserialize(deserializer)?)), None)),
+                        _ => Err(serde::de::Error::custom(format!("unknown msg_type: {}", msg_type))),
+                    }
+                }
             }
 
-            // pub fn to_bytes<T: serde::Serialize>(value: &T) -> fix_serde::prelude::Result<fix_serde::prelude::Serializer<BytesWrite, #name> >{
-            //     fix_serde::to_bytes(value, #name)
-            // }
+
+
         }
     }
 }
-impl ToTokens for IndexDef {
+impl ToTokens for SchemaDef {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         tokens.extend(Into::<TokenStream>::into(self));
     }

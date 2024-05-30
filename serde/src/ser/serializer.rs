@@ -49,6 +49,9 @@ impl<S> Serializer<BytesWrite, S> {
     pub fn join(&mut self, other: Self) {
         self.write.join(other.write);
     }
+    pub fn reset(&mut self) {
+        self.write.reset();
+    }
 }
 impl<S> Deref for Serializer<BytesWrite, S> {
     type Target = BytesWrite;
@@ -255,7 +258,7 @@ impl<W: Write, S: Schema> ser::Serializer for &mut Serializer<W, S> {
                 //     None => {}
                 // }
                 if let Some(tag) = self.write.last_written_tag() {
-                    match S::lookup(tag) {
+                    match S::binary_data_len_pair_index_lookup(tag) {
                         // We are looking at binary data and hence need to add data with equal sign '<dat_tag>=' SerialieSeq::
                         Some(BinaryDataLenPair { tag_len: _, tag_data }) => {
                             self.write.write_tag(tag_data)?;

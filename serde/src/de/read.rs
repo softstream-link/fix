@@ -213,9 +213,10 @@ impl<'origin> Read<'origin> for SliceRead<'origin> {
             _ => {
                 #[cfg(debug_assertions)] // info!("remaining {}", super::deserializer::to_str(Some(&self.slice[self.idx_current..])));
                 log::trace!(
-                    "SliceRead::parse_value SOH/EOF: {}, value: {:?}, state: {}",
-                    self.idx_last_seek_soh,
+                    "{:<58} parsed_val: {:?}, SOH/EOF: {},  state: {}",
+                    "SliceRead::parse_value",
                     res.to_string(),
+                    self.idx_last_seek_soh,
                     self
                 );
 

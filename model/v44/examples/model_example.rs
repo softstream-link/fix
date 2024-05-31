@@ -1,5 +1,3 @@
-use std::borrow::Borrow;
-
 use fix_model_core::prelude::*;
 use fix_model_test::unittest::setup;
 use fix_model_v44::*;
@@ -95,8 +93,8 @@ fn example_frame() {
 
 fn example_msg() {
     // allocated Ascii & Data
-    let msg_inp = NewOrderSingle::<Ascii, aschar, Data> {
-        cl_ord_id: "cl_ord_id".to_owned().try_into().unwrap(),
+    let msg_inp = NewOrderSingle::<&asc, aschar, &dat> {
+        cl_ord_id: "cl_ord_id".try_into().unwrap(),
         // symbol: Some("symbol".try_into().unwrap()),
         side: Side::Buy,
         order_qty: Some(100_f64.into()),
@@ -107,7 +105,9 @@ fn example_msg() {
     info!("fix: {}", fix);
 
     // borrowed Ascii & Data
-    let msg_out: NewOrderSingle<&asc, aschar, &dat> = from_fix(&fix).unwrap();
+    let msg_out: NewOrderSingle<Ascii, aschar, Data> = from_fix(&fix).unwrap();
+    let msg_inp = msg_inp.to_owned_inner_if_ref();
+    assert_eq!(msg_inp, msg_out);
 
     // allocated String & Data
     let msg_inp = NewOrderSingle::<String, char, Data> {
@@ -124,5 +124,6 @@ fn example_msg() {
 
     // borrowed String & Data
     let msg_out: NewOrderSingle<&str, char, &dat> = from_fix(&fix).unwrap();
-    let msg_inp = msg_inp.borrow();
+    let msg_out = msg_out.to_owned_inner_if_ref();
+    assert_eq!(msg_inp, msg_out);
 }

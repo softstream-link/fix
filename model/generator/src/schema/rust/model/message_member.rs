@@ -64,8 +64,7 @@ impl RMessageMember {
             RFldDef::Data(data) => {
                 let member_type_name = format_ident!("{}", data.data_name);
                 quote!(#member_type_name<D>: Default,)
-            }
-            // _ => quote!(),
+            } // _ => quote!(),
         }
     }
     pub fn name(&self) -> &str {
@@ -116,6 +115,65 @@ impl RMessageMember {
                     quote!( if Option::is_none(&self.#member_name) { 0 } else { 1 } )
                 }
             }
+        }
+    }
+    pub fn to_owned_inner_if_ref(&self) -> TokenStream {
+        let member_ident = match &self.member {
+            RFldDef::Plain(RFldDefPlain { name, .. })
+            | RFldDef::Data(RFldDefData { data_name: name, .. })
+            | RFldDef::RepGroup(RFldDefRepGroup { name, .. }) => {
+                format_ident!("r#{}", name.to_case(Case::Snake))
+            }
+        };
+        match &self.member {
+            // String / &str / Ascii / &asc / Data / &dat
+            RFldDef::Plain(RFldDefPlain {
+                new_type: RFldPlainType::String,
+                ..
+            })
+            | RFldDef::Data(RFldDefData { .. }) => {
+                if self.required {
+                    // account: self.account.to_owned_inner_if_ref(),
+                    quote!( #member_ident: self.#member_ident.to_owned_inner_if_ref() , )
+                } else {
+                    quote!(
+                        #member_ident: match &self.#member_ident {
+                            Some(v) => Some(v.to_owned_inner_if_ref()) ,
+                            None => None,
+                        } ,
+                    )
+                }
+            }
+            // // rep group Vec<RepGroup> or Option<Vec<RepGroup>>
+            RFldDef::RepGroup(RFldDefRepGroup { .. }) => {
+                if self.required {
+                    // rep_grp: self.rep_grp.iter().map(|rep_grp| rep_grp.to_owned_inner_if_ref()).collect(),
+                    quote!( #member_ident: self.#member_ident.iter().map(|rep_grp| rep_grp.to_owned_inner_if_ref()).collect() , )
+                } else {
+                    quote!(
+                        #member_ident: match &self.#member_ident {
+                            Some(v) => Some(v.iter().map(|rep_grp| rep_grp.to_owned_inner_if_ref()).collect()),
+                            None => None,
+                        } ,
+                    )
+                }
+            }
+            // Copy T or Option<T>
+            RFldDef::Plain(RFldDefPlain {  .. }) => {
+                if self.required {
+                    quote!( #member_ident: self.#member_ident, )
+                } else {
+                    quote!(
+                        #member_ident: match &self.#member_ident {
+                            Some(v) => Some(*v),
+                            None => None,
+                        } ,
+                    )
+                }
+            }
+            // _ => {
+            //     quote!()
+            // }
         }
     }
 }
@@ -181,14 +239,6 @@ impl From<&RMessageMember> for TokenStream {
                     GenericTypeInfo { string: false, chr: true, data: false, } => quote!(<C>),
                     GenericTypeInfo { string: false, chr: false, data: true, } => quote!(<D>),
                     GenericTypeInfo { string: false, chr: false, data: false, } => quote!(),
-                    // (true, true, true) => quote!(<S,C,D>),
-                    // (true, true, false) => quote!(<S,C>),
-                    // (true, false, true) => quote!(<S,D>),
-                    // (true, false, false) => quote!(<S>),
-                    // (false, true, true) => quote!(<C,D>),
-                    // (false, true, false) => quote!(<C>),
-                    // (false, false, true) => quote!(<D>),
-                    // (false, false, false) => quote!(),
                 };
 
                 let member_rename = fld_meta.tag.to_string();

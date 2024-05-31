@@ -4,7 +4,7 @@ macro_rules! fix_string {
         $crate::fix_string!($NAME, $TAG, pub);
     };
     ($NAME:ident, $TAG:literal, $VIS:vis) => {
-        #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Copy)]
+        #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone)]
         $VIS struct $NAME<S>(S);
         impl<S> $NAME<S> {
             #[inline]
@@ -317,7 +317,7 @@ macro_rules! fix_data {
     ($NAME_LEN:ident, $TAG_LEN:literal, $NAME_DATA:ident, $TAG_DATA:literal) => {
         // Implemented via derive(Default) while expecting inner to panic so that it is only possiblt to initialize
         // Option<$NAME<S>> instead of $NAME<S> directly
-        #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Copy, Default)]
+        #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Default)]
         pub struct $NAME_DATA<D>(D);
         impl<D> $NAME_DATA<D> {
             #[inline]
@@ -475,7 +475,7 @@ pub use fix_data;
 #[macro_export]
 macro_rules! _fix_numeric_fixed_length {
     ($NAME:ident, $TAG:literal, $VIS:vis, $TY:tt, $LEN:literal) => {
-        #[derive(serde::Deserialize, PartialEq, Clone, Default)]
+        #[derive(serde::Deserialize, PartialEq, Clone, Default, Copy)]
         $VIS struct $NAME($TY);
         impl serde::Serialize for $NAME {
             fn serialize<S: serde::Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
@@ -538,7 +538,7 @@ macro_rules! _fix_numeric {
         $crate::_fix_numeric!($NAME, $TAG, pub, $TY);
     };
     ($NAME:ident, $TAG:literal, $VIS:vis, $TY:tt) => {
-        #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Default)]
+        #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Default, Copy)]
         $VIS struct $NAME($TY);
         impl From<$TY> for $NAME {
             #[inline]
@@ -604,7 +604,7 @@ macro_rules! fix_bool {
     ($NAME:ident, $TAG:literal, $VIS:vis) => {
         /// FIX boolean field, represented as a char 'Y' or 'N' because we want both fix serializer to
         /// output a char and not have a special boolean serialization/deserialization logic
-        #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Default)]
+        #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Default, Copy)]
         $VIS struct $NAME(bool);
         impl From<bool> for $NAME {
             #[inline]

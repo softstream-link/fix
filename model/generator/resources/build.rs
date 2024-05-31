@@ -77,9 +77,4 @@ fn main() {
     let out_path = Path::new(&out_dir).join("msg_enums.rs");
     cargo_info!(format!("fix messages output: {:?}", out_path));
     fs::write(&out_path, msg_enums).unwrap();
-
-    // let helpers = r_model.helpers_to_code();
-    // let out_path = Path::new(&out_dir).join("helpers.rs");
-    // cargo_info!(format!("fix messages output: {:?}", out_path));
-    // fs::write(&out_path, helpers).unwrap();
 }

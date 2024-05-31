@@ -155,3 +155,4 @@ fn test_root_44_msgs() {
     info!("out_path: {:?}", out_path);
     fs::write(&out_path, index_code).unwrap();
 }
+

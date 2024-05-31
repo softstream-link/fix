@@ -8,7 +8,7 @@ pub mod ser;
 const SOH: u8 = 0x01;
 const EQS: u8 = b'=';
 
-#[cfg(debug_assertions)]
+#[cfg(feature = "unittest")]
 pub mod unittest;
 
 use bytes::BytesMut;

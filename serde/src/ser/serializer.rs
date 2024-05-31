@@ -7,11 +7,14 @@ use bytes::BytesMut;
 use fix_model_core::{prelude::Schema, schema::BinaryDataLenPair};
 use serde::{ser, Serialize};
 use std::{
-    any::type_name,
     fmt::{Debug, Display},
     num::FpCategory,
     ops::Deref,
 };
+
+#[cfg(debug_assertions)]
+use std::any::type_name;
+
 
 const NAME_SERIALIZER: &str = "Serializer";
 pub struct Serializer<W, X> {
@@ -206,14 +209,14 @@ impl<W: Write, X: Schema> ser::Serializer for &mut Serializer<W, X> {
     }
     fn serialize_newtype_variant<T: ?Sized + Serialize>(
         self,
-        name: &'static str,
+        _name: &'static str,
         _variant_index: u32,
         _variant: &'static str,
         value: &T,
     ) -> Result<()> {
         // note it is impossible to deserialize fix new_type_variant because the message type is in the header
         #[cfg(debug_assertions)]
-        log::info!("{}::serialize_newtype_variant: name: {}", NAME_SERIALIZER, name);
+        log::info!("{}::serialize_newtype_variant: name: {}", NAME_SERIALIZER, _name);
         value.serialize(self)
     }
     fn serialize_unit_struct(self, _name: &'static str) -> Result<()> {

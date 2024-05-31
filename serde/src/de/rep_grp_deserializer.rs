@@ -1,13 +1,18 @@
 use super::{deserializer::Deserializer, macros::impl_deserialize_unimplemented, read::Read};
 use crate::prelude::{Error, Result};
-use fix_model_core::prelude::{FixByteSlice2Display, Schema};
+use fix_model_core::prelude::Schema;
 use serde::de::{self};
-use std::{any::type_name, usize};
+use std::usize;
 
+#[cfg(debug_assertions)]
+use fix_model_core::prelude::FixByteSlice2Display;
+#[cfg(debug_assertions)]
+use std::any::type_name;
+#[cfg(debug_assertions)]
 const NAME_REP_GROUP_MAPACCESS: &str = "RepeatingGroupMapAccess";
 struct RepeatingGroupMapAccess<'a, R, S> {
     deserializer: &'a mut Deserializer<R, S>,
-    name: &'static str,
+    _name: &'static str,
     fields: &'static [&'static str],
     idx_of_last_processed_tag: Option<usize>,
 }
@@ -23,7 +28,7 @@ impl<'a, R, S> RepeatingGroupMapAccess<'a, R, S> {
 
         RepeatingGroupMapAccess {
             deserializer,
-            name,
+            _name: name,
             fields,
             idx_of_last_processed_tag: None,
         }
@@ -64,7 +69,7 @@ impl<'de, 'a, R: Read<'de> + 'a, S: Schema> de::MapAccess<'de> for RepeatingGrou
                     peeked_tag.to_string(),
                     peeked_tag_idx,
                     self.idx_of_last_processed_tag,
-                    self.name,
+                    self._name,
                     self.fields.iter().map(|t| t.to_string()).collect::<Vec<String>>().join("', '"),
                     self.deserializer.read
                 );
@@ -183,6 +188,7 @@ impl<'de, 'a, R: Read<'de> + 'a, S: Schema> de::Deserializer<'de> for &mut Repea
     );
 }
 
+#[cfg(debug_assertions)]
 const NAME_REP_GROUP_SEQ_ACCESS: &str = "RepeatingGroupSeqAccess";
 pub(super) struct RepeatingGroupSeqAccess<'a, R, S> {
     deserializer: RepeatingGroupDeserializer<'a, R, S>,

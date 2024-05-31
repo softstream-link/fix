@@ -13,11 +13,14 @@ use fix_model_core::{
     schema::BinaryDataLenPair,
 };
 use serde::de::{self};
-use std::any::type_name;
 use std::fmt::Display;
 
-// https://doc.rust-lang.org/rust-byexample/scope/lifetime/lifetime_bounds.html
+#[cfg(debug_assertions)]
+use std::any::type_name;
+#[cfg(debug_assertions)]
 const NAME_GREEDY_MAPACESS: &str = "GreedyMapAccess";
+
+// https://doc.rust-lang.org/rust-byexample/scope/lifetime/lifetime_bounds.html
 /// Will continue to yeild keys untill it encounters an EndOfFile.
 /// Typically reserved for deserializing the main body fo the FIX message since the fields are in the arbitrary order.
 struct GreedyMapAccess<'a, R: 'a, X> {
@@ -42,12 +45,12 @@ impl<'de, 'any, R: Read<'de> + 'any, X: Schema> de::MapAccess<'de> for GreedyMap
 
         match self.deserializer.read.peek_tag()? {
             // not EndOfFile
-            Some(peeked_tag) => {
+            Some(_peeked_tag) => {
                 #[cfg(debug_assertions)]
                 log::trace!(
                     "{:<50} peeked_tag: {:?} ",
                     format!("{}::next_key_seed", NAME_GREEDY_MAPACESS),
-                    peeked_tag.to_string()
+                    _peeked_tag.to_string()
                 );
 
                 seed.deserialize(&mut *self.deserializer).map(Some)
@@ -58,12 +61,12 @@ impl<'de, 'any, R: Read<'de> + 'any, X: Schema> de::MapAccess<'de> for GreedyMap
     }
 
     fn next_value_seed<V: de::DeserializeSeed<'de>>(&mut self, seed: V) -> Result<V::Value> {
-        let parsed_tag = self.deserializer.read.parse_tag()?; // note that next_key_seed::FixTagIdentifier will only seek_tag
+        let _parsed_tag = self.deserializer.read.parse_tag()?; // note that next_key_seed::FixTagIdentifier will only seek_tag
         #[cfg(debug_assertions)]
         log::trace!(
             "{:<50} parsed_tag: {:?} self.read: {}",
             format!("{}::next_value_seed", NAME_GREEDY_MAPACESS),
-            parsed_tag.to_string(),
+            _parsed_tag.to_string(),
             self.deserializer.read
         );
 
@@ -72,13 +75,14 @@ impl<'de, 'any, R: Read<'de> + 'any, X: Schema> de::MapAccess<'de> for GreedyMap
     }
 }
 
+#[cfg(debug_assertions)]
 const NAME_LAZY_MAPACCESS: &str = "LazyMapAccess";
 /// Map access is initialized with a list of fields/fix tags that are expected to be deserialized.
 /// [`LazyMapAccess::next_key_seed`] will stop yielding keys as soon at it encounters a tag that is not in the list of expected tags.
 /// Typically reserved for deserializing parts fo the FIX Header because fields are fixed and known.
 pub struct LazyMapAccess<'a, R, S> {
     deserializer: &'a mut Deserializer<R, S>,
-    name: &'static str,
+    _name: &'static str,
     fields: &'static [&'static str],
 }
 impl<'a, R, S> LazyMapAccess<'a, R, S> {
@@ -91,7 +95,7 @@ impl<'a, R, S> LazyMapAccess<'a, R, S> {
             "Forgot to rename NAME_MAPACESS after refactoring"
         );
 
-        LazyMapAccess { deserializer, name, fields }
+        LazyMapAccess { deserializer, _name: name, fields }
     }
 }
 impl<'de, 'a, R: Read<'de> + 'a, S: Schema> de::MapAccess<'de> for LazyMapAccess<'a, R, S> {
@@ -117,7 +121,7 @@ impl<'de, 'a, R: Read<'de> + 'a, S: Schema> de::MapAccess<'de> for LazyMapAccess
                     format!("{}::next_key_seed", NAME_LAZY_MAPACCESS),
                     peeked_tag.to_string(),
                     peeked_tag_idx,
-                    self.name,
+                    self._name,
                     self.fields.iter().map(|t| t.to_string()).collect::<Vec<String>>().join("', '"),
                     self.deserializer.read
                 );

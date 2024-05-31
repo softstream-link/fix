@@ -1,6 +1,6 @@
 {
     "rust-analyzer.cargo.features": [
-        "develop"
+        "full"
     ],
     "workbench.editor.revealIfOpen": true,
     "cSpell.words": [

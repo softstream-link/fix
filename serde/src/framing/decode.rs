@@ -1,12 +1,13 @@
+use super::{Header1EnvelopeSequence, Header2CompIdSequence, TaggedCheckSum, TaggedMsgType};
 use crate::framing::compute_check_sum;
 use crate::prelude::{Deserializer, Error, Result, SliceRead};
 use fix_model_core::prelude::Schema;
 use fix_model_core::types::dat::dat;
-use fix_model_core::types::display::FixByteSlice2Display;
-
 use serde::Deserialize;
 
-use super::{Header1EnvelopeSequence, Header2CompIdSequence, TaggedCheckSum, TaggedMsgType};
+
+#[cfg(debug_assertions)]
+use fix_model_core::types::display::FixByteSlice2Display;
 
 pub struct FrameDecoder<'de, X: Schema> {
     frame: &'de [u8],
@@ -123,7 +124,6 @@ impl<'de, X: Schema> FrameDecoder<'de, X> {
         C: serde::Deserialize<'de>,
         D: serde::Deserialize<'de>,
         <X as Schema>::Header<'de, &'de str, char, &'de dat>: Deserialize<'de>,
-
     {
         let _header3 = self.deserialize_header3()?;
 

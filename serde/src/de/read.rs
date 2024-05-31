@@ -98,9 +98,9 @@ impl<'origin> SliceRead<'origin> {
                 let int = s.parse::<T>().map_err(|e| Error::Message(format!("{}", e)))?;
                 Ok(int)
             }
-            Err(err) => {
+            Err(_err) => {
                 #[cfg(debug_assertions)]
-                log::error!("parse_number value: {}, is not a valid number. err: {}", value.to_string(), err);
+                log::error!("parse_number value: {}, is not a valid number. err: {}", value.to_string(), _err);
                 Err(Error::InvalidInteger)
             }
         }

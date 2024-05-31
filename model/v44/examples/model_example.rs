@@ -1,14 +1,15 @@
 use fix_model_core::prelude::*;
-use fix_model_test::unittest::setup;
+use fix_serde::prelude::*;
 use fix_model_v44::*;
-use log::info;
 
-pub use fix_serde::prelude::*;
+use fix_model_test::unittest::setup;
+
+use log::info;
 type FrameEnchoder44 = FrameEnchoder<Fix44Schema>;
 type FrameDecoder44<'a> = FrameDecoder<'a, Fix44Schema>;
 
 pub fn from_fix<'de, T: serde::Deserialize<'de>>(slice: &'de [u8]) -> fix_serde::prelude::Result<T> {
-    from_slice_with_schema::<_, Fix44Schema>(slice)
+    fix_serde::prelude::from_slice_with_schema::<_, Fix44Schema>(slice)
 }
 pub fn to_fix<T: serde::Serialize>(value: &T, capacity: Option<usize>) -> fix_serde::prelude::Result<Serializer<BytesWrite, Fix44Schema>> {
     fix_serde::prelude::to_bytes_with_schema::<_, Fix44Schema>(value, capacity)
@@ -93,9 +94,8 @@ fn example_frame() {
 
 fn example_msg() {
     // allocated Ascii & Data
-    let msg_inp = NewOrderSingle::<&asc, aschar, &dat> {
-        cl_ord_id: "cl_ord_id".try_into().unwrap(),
-        // symbol: Some("symbol".try_into().unwrap()),
+    let msg_inp = NewOrderSingle::<Ascii, aschar, Data> {
+        cl_ord_id: "cl_ord_id".to_owned().try_into().unwrap(),
         side: Side::Buy,
         order_qty: Some(100_f64.into()),
         price: Some(99.99.into()),
@@ -105,9 +105,12 @@ fn example_msg() {
     info!("fix: {}", fix);
 
     // borrowed Ascii & Data
-    let msg_out: NewOrderSingle<Ascii, aschar, Data> = from_fix(&fix).unwrap();
-    let msg_inp = msg_inp.to_owned_inner_if_ref();
+    let msg_out: NewOrderSingle<&asc, aschar, &dat> = from_fix(&fix).unwrap();
+    let msg_out = msg_out.to_owned_inner_if_ref();
     assert_eq!(msg_inp, msg_out);
+
+    let json = serde_json::to_string(&msg_inp).unwrap();
+    info!("json: {}", json);
 
     // allocated String & Data
     let msg_inp = NewOrderSingle::<String, char, Data> {
@@ -126,4 +129,6 @@ fn example_msg() {
     let msg_out: NewOrderSingle<&str, char, &dat> = from_fix(&fix).unwrap();
     let msg_out = msg_out.to_owned_inner_if_ref();
     assert_eq!(msg_inp, msg_out);
+
+
 }

@@ -1,13 +1,18 @@
 use super::{deserializer::Deserializer, macros::impl_deserialize_unimplemented, read::Read};
 use crate::prelude::{Error, Result};
-use fix_model_core::prelude::{FixByteSlice2Display, Schema};
+use fix_model_core::prelude::Schema;
 use serde::de::{self};
-use std::{any::type_name, usize};
+use std::usize;
 
+#[cfg(debug_assertions)]
+use fix_model_core::prelude::FixByteSlice2Display;
+#[cfg(debug_assertions)]
+use std::any::type_name;
+#[cfg(debug_assertions)]
 const NAME_REP_GROUP_MAPACCESS: &str = "RepeatingGroupMapAccess";
 struct RepeatingGroupMapAccess<'a, R, S> {
     deserializer: &'a mut Deserializer<R, S>,
-    name: &'static str,
+    _name: &'static str,
     fields: &'static [&'static str],
     idx_of_last_processed_tag: Option<usize>,
 }
@@ -17,13 +22,13 @@ impl<'a, R, S> RepeatingGroupMapAccess<'a, R, S> {
         #[cfg(debug_assertions)]
         assert_eq!(
             NAME_REP_GROUP_MAPACCESS,
-            type_name::<Self>().split("<").next().unwrap().split("::").last().unwrap(),
+            type_name::<Self>().split('<').next().unwrap().split("::").last().unwrap(),
             "Forgot to rename NAME_MAPACESS after refactoring"
         );
 
         RepeatingGroupMapAccess {
             deserializer,
-            name,
+            _name: name,
             fields,
             idx_of_last_processed_tag: None,
         }
@@ -36,7 +41,7 @@ impl<'de, 'a, R: Read<'de> + 'a, S: Schema> de::MapAccess<'de> for RepeatingGrou
         {
             assert_eq!(
                 NAME_REP_GROUP_MAPACCESS,
-                type_name::<Self>().split("<").next().unwrap().split("::").last().unwrap(),
+                type_name::<Self>().split('<').next().unwrap().split("::").last().unwrap(),
                 "Forgot to rename NAME_MAPACESS after refactoring"
             );
         }
@@ -64,7 +69,7 @@ impl<'de, 'a, R: Read<'de> + 'a, S: Schema> de::MapAccess<'de> for RepeatingGrou
                     peeked_tag.to_string(),
                     peeked_tag_idx,
                     self.idx_of_last_processed_tag,
-                    self.name,
+                    self._name,
                     self.fields.iter().map(|t| t.to_string()).collect::<Vec<String>>().join("', '"),
                     self.deserializer.read
                 );
@@ -103,7 +108,7 @@ impl<'de, 'a, R: Read<'de> + 'a, S: Schema> de::MapAccess<'de> for RepeatingGrou
         #[cfg(debug_assertions)]
         {
             log::trace!(
-                "{:<50} parased_tag: {:?} ",
+                "{:<50} parsed_tag: {:?} ",
                 format!("{}::next_value_seed", NAME_REP_GROUP_MAPACCESS),
                 _parsed_tag.to_string()
             );
@@ -183,6 +188,7 @@ impl<'de, 'a, R: Read<'de> + 'a, S: Schema> de::Deserializer<'de> for &mut Repea
     );
 }
 
+#[cfg(debug_assertions)]
 const NAME_REP_GROUP_SEQ_ACCESS: &str = "RepeatingGroupSeqAccess";
 pub(super) struct RepeatingGroupSeqAccess<'a, R, S> {
     deserializer: RepeatingGroupDeserializer<'a, R, S>,
@@ -195,7 +201,7 @@ impl<'a, R, S: Schema> RepeatingGroupSeqAccess<'a, R, S> {
         #[cfg(debug_assertions)]
         assert_eq!(
             NAME_REP_GROUP_SEQ_ACCESS,
-            type_name::<Self>().split("<").next().unwrap().split("::").last().unwrap(),
+            type_name::<Self>().split('<').next().unwrap().split("::").last().unwrap(),
             "Forgot to rename NAME_SEQ_ACCESS after refactoring"
         );
 

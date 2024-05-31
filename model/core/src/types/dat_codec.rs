@@ -5,14 +5,16 @@ use std::{
     ops::Deref,
 };
 
+use super::data::Data;
+
 #[derive(Debug)]
-enum MaybeAllocated<'a> {
+pub enum MaybeAllocated<'a> {
     Allocated(Vec<u8>),
     Borrowed { slice: &'a [u8], base64: bool },
 }
 #[repr(transparent)]
 #[allow(non_camel_case_types)]
-// #[derive()] // TODO add decoder type to generic with default base64
+// #[derive()] // TODO add decoder type so that different types if enchodings are possible to generic with default base64
 pub struct dat_codec<'a>(MaybeAllocated<'a>);
 impl<'a> dat_codec<'a> {
     #[inline]
@@ -21,8 +23,8 @@ impl<'a> dat_codec<'a> {
     }
     pub fn decode(&mut self) -> Result<(), Error> {
         match &self.0 {
-            MaybeAllocated::Borrowed { slice, base64 } if *base64 == true => {
-                let v = slice.from_base64().map_err(|e| Error::NotBase64String(e.to_string()))?;
+            MaybeAllocated::Borrowed { slice, base64 } if *base64 => {
+                let v = slice.decode_base64().map_err(|e| Error::NotBase64String(e.to_string()))?;
                 self.0 = MaybeAllocated::Allocated(v);
                 Ok(())
             }
@@ -36,6 +38,15 @@ impl<'a> dat_codec<'a> {
     }
 
     #[inline]
+    pub fn to_owned(&self) -> Data {
+        match &self.0 {
+            MaybeAllocated::Allocated(v) => Data(v.clone()),
+            MaybeAllocated::Borrowed { slice, .. } => Data(slice.to_vec()),
+        }
+    }
+    
+
+    #[inline]
     fn as_slice(&self) -> &[u8] {
         match &self.0 {
             MaybeAllocated::Allocated(v) => v.as_slice(),
@@ -47,7 +58,7 @@ impl Deref for dat_codec<'_> {
     type Target = dat;
     #[inline]
     fn deref(&self) -> &Self::Target {
-        &self.as_dat()
+        self.as_dat()
     }
 }
 impl PartialEq for dat_codec<'_> {
@@ -71,8 +82,9 @@ impl Debug for dat_codec<'_> {
     }
 }
 impl Default for dat_codec<'_> {
-    /// Panics but exists to allow auto generated Default for structs that contain [`MyStruct::<dat_codec>`] to use the following syntax
+    /// Panics but exists to allow auto generated Default for structs that contain [Self] as a member
     /// ```no_run
+    /// let dat = fix_model_core::prelude::dat_codec::from_slice(b"hello");
     /// /*
     /// let l = Logon::<&str, dat_codec> {
     ///     ..Default::default()
@@ -86,7 +98,7 @@ impl Default for dat_codec<'_> {
 impl Serialize for dat_codec<'_> {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
         if serializer.is_human_readable() {
-            self.as_slice().to_base64_string().serialize(serializer)
+            self.as_slice().encode_base64_string().serialize(serializer)
         } else {
             let mut seq = serializer.serialize_seq(Some(self.as_slice().len()))?;
             use serde::ser::SerializeSeq;

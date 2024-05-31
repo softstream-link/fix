@@ -92,16 +92,10 @@ impl QFComponentDef {
     }
 
     pub fn is_single_group(&self) -> bool {
-        match self.category() {
-            QFComponentCategory::SingleRepGrpDefOnly(_) => true,
-            _ => false,
-        }
+        matches!(self.category(), QFComponentCategory::SingleRepGrpDefOnly(_))
     }
     pub fn is_only_fields(&self) -> bool {
-        match self.category() {
-            QFComponentCategory::FieldRefsOnly(_) => true,
-            _ => false,
-        }
+        matches!(self.category(), QFComponentCategory::FieldRefsOnly(_))
     }
     pub fn parts_counter(&self) -> PartsCounter {
         self.parts
@@ -161,7 +155,7 @@ impl From<(&QFComponentDef, &QFModel)> for RMessageMembers {
         for part in &qf_cmp_def.parts {
             match part {
                 QFCompomentPart::FieldRef(fld_ref) => {
-                    let member = qf_fld_ref_2_r_msg_member_plain_or_data(fld_ref, qf_model);
+                    let member = qf_fld_ref_2_r_msg_member_plain_or_data(&qf_cmp_def.name, fld_ref, qf_model);
                     match member {
                         Ok(Some(member)) => members.push(member),
                         Ok(None) => (),
@@ -178,7 +172,7 @@ impl From<(&QFComponentDef, &QFModel)> for RMessageMembers {
                         member: RFldDef::RepGroup(RFldDefRepGroup {
                             name: qf_cmp_def.name.to_owned(),
                             tag: qf_fld_def.number.parse().unwrap(),
-                            generic_info: generic_info,
+                            generic_info,
                         }),
                         required: grp_def.required == "Y",
                     });

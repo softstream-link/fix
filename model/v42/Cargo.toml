@@ -15,7 +15,9 @@ categories.workspace = true
 fix_model_generator = { workspace = true } # provides macros to generate FIX fields & message structs
 fix_model_core = { workspace = true }      # provides core types & traits used when generating FIX fields & message structs
 serde = { workspace = true }
-base64 = { workspace = true } 
+base64 = { workspace = true }
+fix_serde = { workspace = true }           # required for helper methods to work 
+itoa = { workspace = true }
 
 [build-dependencies]
 fix_model_generator = { workspace = true }
@@ -26,4 +28,3 @@ serde_json = { workspace = true }
 fix_serde = { workspace = true }
 fix_model_test = { workspace = true }
 log = { workspace = true }
-

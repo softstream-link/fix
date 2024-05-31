@@ -103,6 +103,8 @@ pub enum RFldPlainType {
     String,  // has generic
     CharAny, // has generic
     USize,
+    USizeFixedLength,
+    U8FixedLength,
     ISize,
     Float64,
     Float32,
@@ -133,7 +135,11 @@ impl TryFrom<&QFFieldDef> for RFldDefPlain {
     fn try_from(qf_field_def: &QFFieldDef) -> Result<Self, Self::Error> {
         // log::warn!("RFldDefPlain name: {}, type: {}", qf_field_def.name, qf_field_def.r#type);
 
-        let field_type = if qf_field_def.is_generic_string() {
+        let field_type = if ["BodyLength"].contains(&qf_field_def.name.as_str()) {
+            RFldPlainType::USizeFixedLength
+        } else if ["CheckSum"].contains(&qf_field_def.name.as_str()) {
+            RFldPlainType::U8FixedLength
+        } else if qf_field_def.is_generic_string() {
             RFldPlainType::String
         } else if qf_field_def.is_generic_char() {
             RFldPlainType::CharAny
@@ -148,15 +154,7 @@ impl TryFrom<&QFFieldDef> for RFldDefPlain {
         } else if qf_field_def.is_bool() {
             RFldPlainType::Bool
         } else if qf_field_def.is_ascii_char_enum() {
-            RFldPlainType::AsciiCharEnum(
-                qf_field_def
-                    .variants
-                    .as_ref()
-                    .unwrap()
-                    .iter()
-                    .map(|var| RAsciiCharVariant::from(var))
-                    .collect(),
-            )
+            RFldPlainType::AsciiCharEnum(qf_field_def.variants.as_ref().unwrap().iter().map(RAsciiCharVariant::from).collect())
         } else {
             return Err(Error::QuickFixFieldTypeNotMapped(format!(
                 "name: {}, type: {}",
@@ -165,13 +163,12 @@ impl TryFrom<&QFFieldDef> for RFldDefPlain {
         };
         Ok(Self {
             name: qf_field_def.name.clone(),
-            tag: qf_field_def.number.parse().expect(
-                format!(
+            tag: qf_field_def.number.parse().unwrap_or_else(|_| {
+                panic!(
                     "quickfix definion of field 'number' is not valid, expected usize. value: {:?}",
                     qf_field_def
                 )
-                .as_str(),
-            ),
+            }),
             new_type: field_type,
             fix_type: qf_field_def.r#type.clone(),
         })
@@ -187,6 +184,12 @@ impl From<&RFldDefPlain> for TokenStream {
             ),
             RFldPlainType::USize => quote!(
                 fix_model_generator::prelude::fix_usize!(#name, #tag);
+            ),
+            RFldPlainType::USizeFixedLength => quote!(
+                fix_model_generator::prelude::fix_usize_fixed_length!(#name, #tag);
+            ),
+            RFldPlainType::U8FixedLength => quote!(
+                fix_model_generator::prelude::fix_u8_fixed_length!(#name, #tag);
             ),
             RFldPlainType::ISize => quote!(
                 fix_model_generator::prelude::fix_isize!(#name, #tag);

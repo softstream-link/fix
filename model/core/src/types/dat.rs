@@ -27,6 +27,12 @@ impl<'a> From<&'a [u8]> for &'a dat {
         dat::from_slice(value)
     }
 }
+impl AsRef<dat> for &dat {
+    #[inline]
+    fn as_ref(&self) -> &dat {
+        self
+    }
+}
 impl ToOwned for dat {
     type Owned = Data;
     #[inline]
@@ -56,7 +62,8 @@ impl Debug for &dat {
 }
 impl Default for &dat {
     /// Panics but exists to allow auto generated Default for structs that contain ['MyStruct::<&dat>'] to use the following syntax
-    /// ```no_run
+    /// ```
+    /// let dat = fix_model_core::prelude::dat::from_slice(b"hello");
     /// /*
     /// let l = Logon::<&str, &dat> {
     ///     ..Default::default()
@@ -70,7 +77,7 @@ impl Default for &dat {
 impl Serialize for &dat {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
         if serializer.is_human_readable() {
-            self.as_slice().to_base64_string().serialize(serializer)
+            self.as_slice().encode_base64_string().serialize(serializer)
         } else {
             let mut seq = serializer.serialize_seq(Some(self.0.len()))?;
             use serde::ser::SerializeSeq;
@@ -119,29 +126,30 @@ impl<'de> Deserialize<'de> for &'de dat {
 
 impl<'a> Base64 for &'a dat {
     #[inline]
-    fn to_base64_string(&self) -> String {
-        self.as_slice().to_base64_string()
+    fn encode_base64_string(&self) -> String {
+        self.as_slice().encode_base64_string()
     }
     #[inline]
-    fn to_base64_vec(&self) -> Vec<u8> {
-        self.as_slice().to_base64_vec()
+    fn encode_base64_vec(&self) -> Vec<u8> {
+        self.as_slice().encode_base64_vec()
     }
     #[inline]
-    fn from_base64(&self) -> Result<Vec<u8>, base64::DecodeSliceError> {
-        self.as_slice().from_base64()
+    fn decode_base64(&self) -> Result<Vec<u8>, base64::DecodeSliceError> {
+        self.as_slice().decode_base64()
     }
 }
 
 pub trait Base64 {
-    fn to_base64_string(&self) -> String;
-    fn to_base64_vec(&self) -> Vec<u8>;
-    fn from_base64(&self) -> Result<Vec<u8>, base64::DecodeSliceError>;
+    fn encode_base64_string(&self) -> String;
+    fn encode_base64_vec(&self) -> Vec<u8>;
+    fn decode_base64(&self) -> Result<Vec<u8>, base64::DecodeSliceError>;
 }
 impl Base64 for &[u8] {
-    fn to_base64_string(&self) -> String {
-        unsafe { String::from_utf8_unchecked(Base64::to_base64_vec(self)) }
+    fn encode_base64_string(&self) -> String {
+        unsafe { String::from_utf8_unchecked(Base64::encode_base64_vec(self)) }
     }
-    fn to_base64_vec(&self) -> Vec<u8> {
+    #[allow(clippy::slow_vector_initialization)]
+    fn encode_base64_vec(&self) -> Vec<u8> {
         use base64::prelude::*;
         let mut buf_out = Vec::new();
         // make sure we'll have a slice big enough for base64 + padding
@@ -151,7 +159,8 @@ impl Base64 for &[u8] {
         buf_out.truncate(bytes_written);
         buf_out
     }
-    fn from_base64(&self) -> Result<Vec<u8>, base64::DecodeSliceError> {
+    #[allow(clippy::slow_vector_initialization)]
+    fn decode_base64(&self) -> Result<Vec<u8>, base64::DecodeSliceError> {
         use base64::prelude::*;
         let mut buf_out = Vec::new();
         buf_out.resize(self.len() * 3 / 4, 0);
@@ -171,11 +180,11 @@ mod test {
         setup::log::configure();
         let inp_raw = b"hello world".as_ref();
         info!("inp_raw: {:?}", inp_raw);
-        let base64_string = inp_raw.to_base64_string();
+        let base64_string = inp_raw.encode_base64_string();
         info!("base64_string: {}", base64_string);
         assert_eq!(base64_string, "aGVsbG8gd29ybGQ=");
 
-        let out_raw = base64_string.as_bytes().from_base64().unwrap();
+        let out_raw = base64_string.as_bytes().decode_base64().unwrap();
         info!("out_raw: {:?}", out_raw);
         assert_eq!(inp_raw, out_raw);
     }

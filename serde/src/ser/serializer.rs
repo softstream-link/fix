@@ -7,31 +7,33 @@ use bytes::BytesMut;
 use fix_model_core::{prelude::Schema, schema::BinaryDataLenPair};
 use serde::{ser, Serialize};
 use std::{
-    any::type_name,
     fmt::{Debug, Display},
     num::FpCategory,
     ops::Deref,
 };
 
+#[cfg(debug_assertions)]
+use std::any::type_name;
+
+
 const NAME_SERIALIZER: &str = "Serializer";
-pub struct Serializer<W, S> {
+pub struct Serializer<W, X> {
     write: W,
-    is_human_readable: bool,
-    _schema: S,
+    phantom: std::marker::PhantomData<X>,
 }
-impl<W: Write, S: Schema> Serializer<W, S> {
-    pub fn new(write: W, is_human_readable: bool, schema: S) -> Self {
+impl<W: Write, X: Schema> Serializer<W, X> {
+    #[inline]
+    pub fn new(write: W) -> Self {
         Self {
             write,
-            is_human_readable,
-            _schema: schema,
+            phantom: std::marker::PhantomData,
         }
     }
-    #[inline(always)]
+    #[inline]
     pub fn serialize_soh(&mut self) -> Result<()> {
         self.write.write_soh()
     }
-    #[inline(always)]
+    #[inline]
     pub fn serialize_eqs(&mut self) -> Result<()> {
         self.write.write_eqs()
     }
@@ -39,33 +41,39 @@ impl<W: Write, S: Schema> Serializer<W, S> {
         self.write
     }
 }
-impl<S> From<Serializer<BytesWrite, S>> for BytesMut {
-    fn from(serializer: Serializer<BytesWrite, S>) -> Self {
+impl<X> From<Serializer<BytesWrite, X>> for BytesMut {
+    fn from(serializer: Serializer<BytesWrite, X>) -> Self {
         serializer.write.into()
     }
 }
-impl<S> Serializer<BytesWrite, S> {
+impl<X> Serializer<BytesWrite, X> {
     pub fn as_slice(&self) -> &[u8] {
         self
     }
+    pub fn join(&mut self, other: Self) {
+        self.write.join(other.write);
+    }
+    pub fn take(self) -> BytesMut {
+        self.write.take()
+    }
 }
-impl<S> Deref for Serializer<BytesWrite, S> {
+impl<X> Deref for Serializer<BytesWrite, X> {
     type Target = BytesWrite;
     fn deref(&self) -> &Self::Target {
         &self.write
     }
 }
-impl<W: Write, S> Display for Serializer<W, S> {
+impl<W: Write, X> Display for Serializer<W, X> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.write.fmt(f)
     }
 }
-impl<W: Write, S> Debug for Serializer<W, S> {
+impl<W: Write, X> Debug for Serializer<W, X> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.write.fmt(f)
     }
 }
-impl<W: Write, S: Schema> ser::Serializer for &mut Serializer<W, S> {
+impl<W: Write, X: Schema> ser::Serializer for &mut Serializer<W, X> {
     type Ok = ();
     type Error = Error;
     type SerializeSeq = Self;
@@ -76,7 +84,7 @@ impl<W: Write, S: Schema> ser::Serializer for &mut Serializer<W, S> {
     type SerializeStruct = Self;
     type SerializeStructVariant = Self;
     fn is_human_readable(&self) -> bool {
-        self.is_human_readable
+        false
     }
     impl_serialize_integer!(
         serialize_u8(self, v: u8),
@@ -201,14 +209,14 @@ impl<W: Write, S: Schema> ser::Serializer for &mut Serializer<W, S> {
     }
     fn serialize_newtype_variant<T: ?Sized + Serialize>(
         self,
-        name: &'static str,
+        _name: &'static str,
         _variant_index: u32,
         _variant: &'static str,
         value: &T,
     ) -> Result<()> {
         // note it is impossible to deserialize fix new_type_variant because the message type is in the header
         #[cfg(debug_assertions)]
-        log::info!("{}::serialize_newtype_variant: name: {}", NAME_SERIALIZER, name);
+        log::info!("{}::serialize_newtype_variant: name: {}", NAME_SERIALIZER, _name);
         value.serialize(self)
     }
     fn serialize_unit_struct(self, _name: &'static str) -> Result<()> {
@@ -239,8 +247,22 @@ impl<W: Write, S: Schema> ser::Serializer for &mut Serializer<W, S> {
                 self.write.write_value(itoa::Buffer::new().format(len).as_bytes())?;
                 self.write.write_soh()?;
 
-                match self.write.last_written_tag() {
-                    Some(tag) => match S::lookup(tag) {
+                // match self.write.last_written_tag() {
+                //     Some(tag) => match S::lookup(tag) {
+                //         // We are looking at binary data and hence need to add data with equal sign '<dat_tag>=' SerialieSeq::
+                //         Some(BinaryDataLenPair { tag_len: _, tag_data }) => {
+                //             self.write.write_tag(tag_data)?;
+                //             self.write.write_eqs()?;
+                //         }
+                //         // we are looking at repeating group and SerailizeSeq::next_element will serialize the rests
+                //         None => {
+                //             // self.serialize_soh()?; {}
+                //         }
+                //     },
+                //     None => {}
+                // }
+                if let Some(tag) = self.write.last_written_tag() {
+                    match X::binary_data_len_pair_index_lookup(tag) {
                         // We are looking at binary data and hence need to add data with equal sign '<dat_tag>=' SerialieSeq::
                         Some(BinaryDataLenPair { tag_len: _, tag_data }) => {
                             self.write.write_tag(tag_data)?;
@@ -250,8 +272,7 @@ impl<W: Write, S: Schema> ser::Serializer for &mut Serializer<W, S> {
                         None => {
                             // self.serialize_soh()?; {}
                         }
-                    },
-                    None => {}
+                    }
                 }
 
                 return Ok(self);
@@ -266,14 +287,14 @@ impl<W: Write, S: Schema> ser::Serializer for &mut Serializer<W, S> {
     }
 }
 
-impl<W: Write, S: Schema> ser::SerializeSeq for &mut Serializer<W, S> {
+impl<W: Write, X: Schema> ser::SerializeSeq for &mut Serializer<W, X> {
     type Ok = ();
     type Error = Error;
 
     /// SerializeSeq::serialize_element: is exclusively reserved for serializing repeating group & binary data tag pair.
     /// struct Msg {
     ///     #[serde(rename="384")]
-    ///     repeating_group: Vec<RepeatingGroup>,
+    ///     repeating_group: `Vec<RepeatingGroup>`,
     ///     #[serde(rename="95")]
     ///     data: Data,
     /// }
@@ -291,7 +312,7 @@ impl<W: Write, S: Schema> ser::SerializeSeq for &mut Serializer<W, S> {
         Ok(())
     }
 }
-impl<W: Write, S: Schema> ser::SerializeStruct for &mut Serializer<W, S> {
+impl<W: Write, X: Schema> ser::SerializeStruct for &mut Serializer<W, X> {
     type Ok = ();
     type Error = Error;
 
@@ -308,7 +329,7 @@ impl<W: Write, S: Schema> ser::SerializeStruct for &mut Serializer<W, S> {
         Ok(())
     }
 }
-impl<W: Write, S: Schema> ser::SerializeTupleStruct for &mut Serializer<W, S> {
+impl<W: Write, X: Schema> ser::SerializeTupleStruct for &mut Serializer<W, X> {
     type Ok = ();
     type Error = Error;
 
@@ -322,7 +343,7 @@ impl<W: Write, S: Schema> ser::SerializeTupleStruct for &mut Serializer<W, S> {
 }
 
 // NOT IMPLEMENTED
-impl<W: Write, S: Schema> ser::SerializeTuple for &mut Serializer<W, S> {
+impl<W: Write, X: Schema> ser::SerializeTuple for &mut Serializer<W, X> {
     type Ok = ();
     type Error = Error;
 
@@ -338,7 +359,7 @@ impl<W: Write, S: Schema> ser::SerializeTuple for &mut Serializer<W, S> {
         Err(Error::NotSupported("SerializeTuple::end"))
     }
 }
-impl<W: Write, S: Schema> ser::SerializeStructVariant for &mut Serializer<W, S> {
+impl<W: Write, X: Schema> ser::SerializeStructVariant for &mut Serializer<W, X> {
     type Ok = ();
     type Error = Error;
 
@@ -358,7 +379,7 @@ impl<W: Write, S: Schema> ser::SerializeStructVariant for &mut Serializer<W, S> 
         Err(Error::NotSupported("SerializeStructVariant::end"))
     }
 }
-impl<W: Write, S: Schema> ser::SerializeMap for &mut Serializer<W, S> {
+impl<W: Write, X: Schema> ser::SerializeMap for &mut Serializer<W, X> {
     type Ok = ();
     type Error = Error;
 
@@ -380,7 +401,7 @@ impl<W: Write, S: Schema> ser::SerializeMap for &mut Serializer<W, S> {
         Err(Error::NotSupported("SerializeMap::end"))
     }
 }
-impl<W: Write, S: Schema> ser::SerializeTupleVariant for &mut Serializer<W, S> {
+impl<W: Write, X: Schema> ser::SerializeTupleVariant for &mut Serializer<W, X> {
     type Ok = ();
     type Error = Error;
 

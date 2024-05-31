@@ -18,6 +18,7 @@ serde = { workspace = true }
 itoa = { workspace = true }
 ryu = { workspace = true }
 fix_model_core = { workspace = true }
+fix_model_generator = { workspace = true }
 
 # enabled when "unittest" feature is enabled
 # env_logger = { workspace = true, optional = true }
@@ -27,9 +28,9 @@ fix_model_core = { workspace = true }
 [dev-dependencies]
 criterion = { workspace = true }
 
-fix_serde = { workspace = true }
+fix_serde = { workspace = true, features = ["unittest"]}
 fix_model_test = { workspace = true }
-fix_model_generator = { workspace = true }
+
 
 env_logger = { workspace = true }
 colored = { workspace = true }
@@ -38,7 +39,6 @@ serde_json = { workspace = true }
 
 [features]
 default = []
-# develop = ["unittest"]
-develop = []
-# unittest = ["dep:env_logger", "dep:colored", "dep:serde_json"]
-# utf8_support = []
+unittest = []
+full = ["unittest"]
+

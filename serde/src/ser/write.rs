@@ -29,6 +29,7 @@ pub struct BytesWrite {
     write_soh_issued: bool,
 }
 impl BytesWrite {
+    #[inline]
     pub fn new(bytes: BytesMut) -> Self {
         Self {
             bytes,
@@ -42,6 +43,19 @@ impl BytesWrite {
     pub fn as_slice(&self) -> &[u8] {
         self
     }
+    pub fn join(&mut self, other: BytesWrite) {
+        self.bytes.unsplit(other.bytes);
+        self.last_tag = other.last_tag;
+        self.write_soh_issued = other.write_soh_issued;
+    }
+    pub fn take(self) -> BytesMut {
+        self.bytes
+    }
+    // pub fn reset(&mut self) {
+    //     self.bytes.clear();
+    //     self.last_tag = None;
+    //     self.write_soh_issued = false;
+    // }
 }
 impl Deref for BytesWrite {
     type Target = BytesMut;
@@ -95,7 +109,13 @@ impl Write for BytesWrite {
 impl Display for BytesWrite {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use fix_model_core::prelude::FixByteSlice2Display;
-        write!(f, "{}", (&self.bytes as &[u8]).to_string())
+        write!(
+            f,
+            "len: {}, capacity: {}, bytes: \"{}\"",
+            self.bytes.len(),
+            self.bytes.capacity(),
+            (&self.bytes as &[u8]).to_string()
+        )
     }
 }
 impl Debug for BytesWrite {

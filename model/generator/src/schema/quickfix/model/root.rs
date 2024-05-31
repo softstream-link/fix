@@ -1,7 +1,7 @@
 use super::component_def::{QFCompomentPart, QFComponentDef, QFComponentDefs};
 use super::field_def::{QFFieldDef, QFFieldDefs};
-use super::header_trailer_def::{QFHeaderDef, QFTrailerDef};
-use super::message_def::{QFMessageDef, QFMessageDefs};
+use super::header_trailer_def::QFHeaderDef;
+use super::message_def::{QFMessageDef, QFMessageDefs, QFMessagePart};
 use super::refs::{QFComponentRef, QFFieldRef};
 use super::repgroup_def::{QFGroupDef, QFGroupPart, QFRepGroupDef};
 use crate::prelude::RFModel;
@@ -38,9 +38,8 @@ pub struct QFModel {
     #[serde(rename = "header")]
     header_def: QFHeaderDef,
 
-    #[serde(rename = "trailer")]
-    trailer_def: QFTrailerDef,
-
+    // #[serde(rename = "trailer")]
+    // trailer_def: QFTrailerDef,
     #[serde(skip_deserializing)]
     pub fld_defs_plain: Vec<QFFieldDef>,
 
@@ -50,23 +49,82 @@ pub struct QFModel {
 
 impl QFModel {
     fn complete_preparation(&mut self) {
-        (&mut self.fld_defs).sort();
-        (&mut self.cmp_defs).sort();
-        // add header and trailer to messages so that thier rust structs are created
+        // these are defined in the fix_serde module
+        const HEADER_1_ENVELOPE_SEQUENCE: &[&str] = &["BeginString", "BodyLength"];
+        const HEADER_2_TYPE_COMP_ID_SEQUENCE: &[&str] = &["MsgType", "SenderCompID", "TargetCompID"];
+        const TRAILER_1_SIGNATURE: &[&str] = &["SignatureLength", "Signature"];
+        const TRAILER_2_CHECKSUM: &[&str] = &["CheckSum"];
+
+        // only generate flds that are not defined it the fix_serde modeul
+        self.fld_defs.get_mut().retain(|f| {
+            !HEADER_1_ENVELOPE_SEQUENCE.contains(&f.name.as_str())
+                && !HEADER_2_TYPE_COMP_ID_SEQUENCE.contains(&f.name.as_str())
+                && !TRAILER_1_SIGNATURE.contains(&f.name.as_str())
+                && !TRAILER_2_CHECKSUM.contains(&f.name.as_str())
+        });
+        self.fld_defs.sort();
+        self.cmp_defs.sort();
+
         {
+            // add header to messages so that thier rust structs are created
+
             self.msg_defs.defs.push(QFMessageDef {
-                name: "Header".to_string(),
+                name: "Header3OperationalSequence".to_string(),
                 msg_type: "N/A".to_string(),
                 msg_cat: "header".to_string(),
-                parts: Some(self.header_def.parts.clone()),
+                parts: {
+                    Some(
+                        self.header_def
+                            .parts
+                            .iter()
+                            .filter_map(|f| {
+                                match !HEADER_1_ENVELOPE_SEQUENCE.contains(&f.name()) && !HEADER_2_TYPE_COMP_ID_SEQUENCE.contains(&f.name()) {
+                                    true => Some(f.clone()),
+                                    false => None,
+                                }
+                            })
+                            .collect::<Vec<_>>(),
+                    )
+                },
             });
-            self.msg_defs.defs.push(QFMessageDef {
-                name: "Trailer".to_string(),
-                msg_type: "N/A".to_string(),
-                msg_cat: "trailer".to_string(),
-                parts: Some(self.trailer_def.parts.clone()),
-            });
+
+            // All of these already have a tagvalue equiv from field defs
+            // self.header_def.parts.iter().for_each(|part| match part {
+            //     QFMessagePart::FieldRef(_) | QFMessagePart::ComponentRef(_) => {
+            //         self.msg_defs.defs.push(QFMessageDef {
+            //             name: "TagValueHeader".to_owned() + &part.name(),
+            //             msg_type: "N/A".to_string(),
+            //             msg_cat: "header".to_string(),
+            //             parts: Some(vec![QFMessagePart::FieldRef(QFFieldRef {
+            //                 name: part.name().to_owned(),
+            //                 required: "Y".to_string(),
+            //             })]),
+            //         });
+            //     }
+            //     _ => {} // TODO TagValue structs for header groups or other groups are not created at the moment
+            // });
         }
+        // // add trailer to messages so that thier rust structs are created
+        // {
+        //     self.msg_defs.defs.push(QFMessageDef {
+        //         name: "Trailer".to_string(),
+        //         msg_type: "N/A".to_string(),
+        //         msg_cat: "trailer".to_string(),
+        //         parts: Some(self.trailer_def.parts.clone()),
+        //     });
+
+        //     self.trailer_def.parts.iter().for_each(|f| {
+        //         self.msg_defs.defs.push(QFMessageDef {
+        //             name: "TagValueTrailer".to_owned() + &f.name(),
+        //             msg_type: "N/A".to_string(),
+        //             msg_cat: "trailer".to_string(),
+        //             parts: Some(vec![QFMessagePart::FieldRef(QFFieldRef {
+        //                 name: f.name().to_owned(),
+        //                 required: "Y".to_string(),
+        //             })]),
+        //         });
+        //     });
+        // }
 
         {
             // already sorted because .fld_defs are sorted
@@ -77,6 +135,20 @@ impl QFModel {
                 .filter(|qf_field| qf_field.is_type_plain())
                 .cloned()
                 .collect::<Vec<_>>();
+            // add fld to messages so that thier rust structs are created
+
+            self.fld_defs_plain.iter().for_each(|f| {
+                // log::warn!("{:?}", f);
+                self.msg_defs.defs.push(QFMessageDef {
+                    name: "TagValue".to_owned() + &f.name,
+                    msg_type: "N/A".to_string(),
+                    msg_cat: "tag_value".to_string(),
+                    parts: Some(vec![QFMessagePart::FieldRef(QFFieldRef {
+                        name: f.name.clone(),
+                        required: "Y".to_string(),
+                    })]),
+                });
+            });
         }
 
         {
@@ -112,6 +184,26 @@ impl QFModel {
                     (len.clone(), data.clone())
                 })
                 .collect::<Vec<_>>();
+
+            // add binary flds to TagVale messages
+            self.fld_defs_len_data.iter().for_each(|f| {
+                // log::warn!("{:?}", f);
+                self.msg_defs.defs.push(QFMessageDef {
+                    name: "TagValue".to_owned() + &f.1.name, // data tag name
+                    msg_type: "N/A".to_string(),
+                    msg_cat: "tag_value".to_string(),
+                    parts: Some(vec![
+                        QFMessagePart::FieldRef(QFFieldRef {
+                            name: f.0.name.clone(),
+                            required: "Y".to_string(),
+                        }),
+                        QFMessagePart::FieldRef(QFFieldRef {
+                            name: f.1.name.clone(),
+                            required: "Y".to_string(),
+                        }),
+                    ]),
+                });
+            });
         }
     }
 
@@ -180,7 +272,7 @@ impl QFModel {
     }
 
     pub fn message_defs(&self) -> &Vec<QFMessageDef> {
-        &self.msg_defs.get()
+        self.msg_defs.get()
     }
     pub fn details<F: Fn(&QFMessageDef) -> bool>(&self, filter: F) -> Result<String, String> {
         let msgs = self.message_defs().iter().filter(|m| filter(m)).collect::<Vec<_>>();
@@ -239,11 +331,11 @@ impl From<&QFModel> for RFModel {
                 let len_id = len
                     .number
                     .parse()
-                    .expect(format!("quickfix definion of field 'number' is not valid, expected usize. value: {:?}", len).as_str());
+                    .unwrap_or_else(|_| panic!("quickfix definion of field 'number' is not valid, expected usize. value: {:?}", len));
                 let data_id = data
                     .number
                     .parse()
-                    .expect(format!("quickfix definion of field 'number' is not valid, expected usize. value: {:?}", data).as_str());
+                    .unwrap_or_else(|_| panic!("quickfix definion of field 'number' is not valid, expected usize. value: {:?}", data));
                 RFldDefData {
                     len_name: len.name.clone(),
                     len_tag: len_id,
@@ -281,7 +373,7 @@ impl From<&QFModel> for RFModel {
             errors,
             name,
         };
-        rf_model.ready();
+        rf_model.complete_preparation();
         rf_model
     }
 }

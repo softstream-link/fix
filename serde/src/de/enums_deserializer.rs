@@ -8,7 +8,7 @@ const NAME: &str = "EnumIdentifierDeserializer";
 struct EnumIdentifierDeserializer<'a, R, S> {
     de: &'a mut Deserializer<R, S>,
 }
-impl<'a, 'de, R, S> EnumIdentifierDeserializer<'a, R, S> {
+impl<'a, R, S> EnumIdentifierDeserializer<'a, R, S> {
     #[inline(always)]
     fn new(de: &'a mut Deserializer<R, S>) -> Self {
         debug_assert_eq!(
@@ -82,7 +82,7 @@ impl<'de, 'a, R: Read<'de> + 'a, S> de::Deserializer<'de> for EnumIdentifierDese
 pub(crate) struct EnumAccess<'a, R, S> {
     deserializer: &'a mut Deserializer<R, S>,
 }
-impl<'a, 'de, R: 'a, S> EnumAccess<'a, R, S> {
+impl<'a, R: 'a, S> EnumAccess<'a, R, S> {
     #[inline(always)]
     pub fn new(deserializer: &'a mut Deserializer<R, S>) -> Self {
         EnumAccess { deserializer }

@@ -7,8 +7,7 @@ pub use crate::types::{
     asciistr::asc,
     asciistring::Ascii,
     dat::{dat, Base64},
-    dat_codec::dat_codec,
+    dat_codec::{dat_codec, MaybeAllocated},
     data::Data,
-    fixmsgtype::MsgType,
+    fixmsgtype::{Header, MsgTypeCode},
 };
-

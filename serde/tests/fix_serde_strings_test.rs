@@ -71,7 +71,7 @@ fn test_stand_alone_enum_char() {
 fn test_stand_alone_ascii_and_asc() {
     setup::log::configure();
     // Ascii
-    let inp_fix_ascii = Ascii::try_from(b"123").unwrap();
+    let inp_fix_ascii = Ascii::try_from("123".to_owned()).unwrap();
 
     let fix_ser = to_bytes_unittest(&inp_fix_ascii).unwrap();
     info!("fix_ser: {}", fix_ser);
@@ -109,8 +109,8 @@ fn test_msg_owned_ascii_and_utf8() {
     {
         // Ascii String
         let inp_msg_ascii = Msg::<Ascii, aschar> {
-            account: "ACC".try_into().unwrap(),
-            adv_id: "ADV".try_into().unwrap(),
+            account: "ACC".to_owned().try_into().unwrap(),
+            adv_id: "ADV".to_owned().try_into().unwrap(),
             begin_seq_no: BeginSeqNo(100),
             adv_side: AdvSide::Buy,
             ioioth_svc: 'I'.try_into().unwrap(),

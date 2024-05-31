@@ -14,13 +14,13 @@ pub struct QFFieldRef {
     pub required: String,
 }
 impl QFFieldRef {
-    pub fn details(&self, fld_defs: &Vec<QFFieldDef>, pad: usize) -> String {
+    pub fn details(&self, fld_defs: &[QFFieldDef], pad: usize) -> String {
         use std::fmt::Write;
         let mut f = String::new();
 
-        write!(
+        writeln!(
             f,
-            "{}|->FldRef: {}@{:25} FldDef:{}\n",
+            "{}|->FldRef: {}@{:25} FldDef:{}",
             PAD.repeat(pad),
             self.required,
             self.name,

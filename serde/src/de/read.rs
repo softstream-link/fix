@@ -1,7 +1,7 @@
 use crate::error::{Error, Result};
 use fix_model_core::prelude::FixByteSlice2Display;
 use std::cmp::min;
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 
 // Prevent users from implementing the Read trait.
 mod private {
@@ -26,11 +26,11 @@ pub trait Read<'origin>: private::Sealed + Display {
 
     /// * Assumes [Self] is positioned to read right after the last `=` sign.
     /// * Will return the value of the specified length
-    /// * Returns [Error::EnexpectedEof] specified length exceeds available bytes or if byte follwoing length size is not `SOH`
+    /// * Returns [`Err(Error::EnexpectedEof)`] specified length exceeds available bytes or if byte follwoing length size is not `SOH`
     fn parse_value_with_length(&mut self, length: usize) -> Result<&'origin [u8]>;
 
     /// * Assumes [Self] is positioned tor read right after the last `=` sign.
-    /// * Will return the value upto but not including the SOH byte. However the value will be parsed as a number of type [T].
+    /// * Will return the value upto but not including the SOH byte. However the value will be parsed as a number of type `T`.
     /// * Will position [Self] immediatly after SOH byte but not return it.
     fn parse_value_as_number<T>(&mut self) -> Result<T>
     where
@@ -45,12 +45,12 @@ pub trait Read<'origin>: private::Sealed + Display {
     // /// returns [None] if the value was not found and Eof reached
     // fn seek_eqs(&mut self) -> Result<Option<()>>;
     /// # Returns
-    /// * [`Ok(Some(&\[u8\]))`] containing the next tag value `WITHOUT` consuming it, call [parse_tag] to consume it.
+    /// * [`Ok(Some(&\[u8\]))`] containing the next tag value `WITHOUT` consuming it, call [`Self::parse_tag`] to consume it.
     /// * [`Ok(None)`] indicating Eof
     fn peek_tag(&mut self) -> Result<Option<&'origin [u8]>>;
     /// # Returns
     /// * [`Ok(&\[u8\])`] containing the next tag value in bytes form `WHILE` consuming it and also consuming one extra byte with `=` that follows the tag
-    /// * [`Error::EnexpectedEof`] if the tag value is not found
+    /// * [`Err(Error::EnexpectedEof)`] if the tag value is not found
     fn parse_tag(&mut self) -> Result<Option<&'origin [u8]>>;
 
     fn last_peeked_tag(&self) -> Option<&'origin [u8]>;
@@ -83,6 +83,10 @@ impl<'origin> SliceRead<'origin> {
     pub fn len(&self) -> usize {
         self.slice.len()
     }
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.slice.is_empty()
+    }
 
     pub fn parse_number<T>(value: &[u8]) -> Result<T>
     where
@@ -94,9 +98,9 @@ impl<'origin> SliceRead<'origin> {
                 let int = s.parse::<T>().map_err(|e| Error::Message(format!("{}", e)))?;
                 Ok(int)
             }
-            Err(err) => {
+            Err(_err) => {
                 #[cfg(debug_assertions)]
-                log::error!("parse_number value: {}, is not a valid number. err: {}", value.to_string(), err);
+                log::error!("parse_number value: {}, is not a valid number. err: {}", value.to_string(), _err);
                 Err(Error::InvalidInteger)
             }
         }
@@ -113,7 +117,7 @@ impl<'origin> SliceRead<'origin> {
             }
         }
     }
-    ///
+
     fn seek_tag(&mut self) -> Option<&'origin [u8]> {
         if self.idx_current < self.idx_last_seek_eqs {
             self.last_seek_tag
@@ -180,13 +184,18 @@ impl<'origin> Display for SliceRead<'origin> {
         let read = read.to_string();
         let unread = unread.to_string();
 
-        write!(f, "{{len: {} slice: \"{}/#{}👉{}\"}}", self.len(), read, self.idx_current, unread)
+        write!(f, "len: {} slice: \"{}/#{}👉{}\"", self.len(), read, self.idx_current, unread)
+    }
+}
+impl<'origin> Debug for SliceRead<'origin> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.to_string())
     }
 }
 impl<'origin> Read<'origin> for SliceRead<'origin> {
     #[inline]
     fn is_end(&mut self) -> Result<bool> {
-        Ok(if self.idx_current < self.slice.len() { false } else { true })
+        Ok(self.idx_current >= self.slice.len()) // slice.len() is already past the last readable index hence if they are equal we are past the last byte
     }
 
     #[inline]
@@ -204,9 +213,10 @@ impl<'origin> Read<'origin> for SliceRead<'origin> {
             _ => {
                 #[cfg(debug_assertions)] // info!("remaining {}", super::deserializer::to_str(Some(&self.slice[self.idx_current..])));
                 log::trace!(
-                    "SliceRead::parse_value SOH/EOF: {}, value: {:?}, state: {}",
-                    self.idx_last_seek_soh,
+                    "{:<58} parsed_val: {:?}, SOH/EOF: {},  state: {}",
+                    "SliceRead::parse_value",
                     res.to_string(),
+                    self.idx_last_seek_soh,
                     self
                 );
 
@@ -230,7 +240,7 @@ impl<'origin> Read<'origin> for SliceRead<'origin> {
                 self.len() - start,
             );
             // returns current position where length is expected to start
-            return Err(Error::UnexpectedEof(self.idx().into()));
+            Err(Error::UnexpectedEof(self.idx().into()))
         } else if self.slice[end] != crate::SOH {
             #[cfg(debug_assertions)]
             log::error!(
@@ -239,7 +249,7 @@ impl<'origin> Read<'origin> for SliceRead<'origin> {
                 (&self.slice[end..end + 1]).to_string(),
                 self,
             );
-            return Err(Error::InvalidFixFrame(end.into()));
+            Err(Error::InvalidFixFrame(end.into()))
         } else {
             self.idx_current = end;
             self.discard(); // SOH

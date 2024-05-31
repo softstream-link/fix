@@ -26,7 +26,7 @@ fn test_dat_codec() {
     info!("json_ser_dat_codec: {}", json_ser_dat_codec);
 
     let out_fix_dat_codec: dat_codec = from_slice_unittest(&fix_ser_dat_codec).unwrap();
-    info!("out_fix_dat_codec: {}", out_fix_dat_codec); // TODO fix deserializer for standalone case
+    info!("out_fix_dat_codec: {}", out_fix_dat_codec);
 
     let mut out_json_dat_codec: dat_codec = serde_json::from_str(&json_ser_dat_codec).unwrap();
     out_json_dat_codec.decode().unwrap();
@@ -93,7 +93,7 @@ fn test_data_and_dat() {
 
         let out_json_dat: Msg<&dat> = serde_json::from_str(&json_ser_dat).unwrap();
         info!("out_json_dat: {}", out_json_dat);
-        assert_eq!(imp_msg_dat.data.as_slice(), out_json_dat.data.from_base64().unwrap());
+        assert_eq!(imp_msg_dat.data.as_slice(), out_json_dat.data.decode_base64().unwrap());
     }
 
     {

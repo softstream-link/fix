@@ -26,6 +26,9 @@ impl QFFieldDefs {
     pub(super) fn get(&self) -> &Vec<QFFieldDef> {
         &self.defs
     }
+    pub(super) fn get_mut(&mut self) -> &mut Vec<QFFieldDef> {
+        &mut self.defs
+    }
 }
 /// # Represents a single field definition in the QuickFIX schema
 /// ```xml

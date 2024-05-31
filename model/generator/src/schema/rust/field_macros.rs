@@ -1,8 +1,11 @@
 #[macro_export]
 macro_rules! fix_string {
     ($NAME:ident, $TAG:literal) => {
-        #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Copy)]
-        pub struct $NAME<S>(S);
+        $crate::fix_string!($NAME, $TAG, pub);
+    };
+    ($NAME:ident, $TAG:literal, $VIS:vis) => {
+        #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone)]
+        $VIS struct $NAME<S>(S);
         impl<S> $NAME<S> {
             #[inline]
             pub fn new(value: S) -> Self {
@@ -14,20 +17,28 @@ macro_rules! fix_string {
                 self.0.as_ref()
             }
         }
-        impl $NAME<&str> {
+        impl<'a> $NAME<&'a str> {
             /// Ownwing inner Type<&str> -> Type<String> instead of &Type<&str> -> Type<&str>
             #[inline]
-            pub fn to_owned(&self) -> $NAME<String> {
+            pub fn to_owned_inner_if_ref(&self) -> $NAME<String> {
                 $NAME(self.0.to_owned())
             }
             /// Borrowing inner Type<&str> -> Type<&str> instead of Type<&str> -> &Type<&str>
             #[inline]
-            pub fn borrow(&self) -> $NAME<&str> {
+            pub fn borrow_inner_if_allocated(&self) -> $NAME<&str> {
                 $NAME(self.0)
             }
             /// Borrowing inner &str as &str
             #[inline]
             pub fn value(&self) -> &str {
+                self.0
+            }
+            #[inline]
+            pub fn into_inner(self) -> &'a str {
+                self.0
+            }
+            #[inline]
+            pub fn as_str(&self) -> &str {
                 self.0
             }
         }
@@ -40,12 +51,12 @@ macro_rules! fix_string {
         impl $NAME<String> {
             /// Borrowing inner Type<String> -> Type<&str> instead of Type<String> -> &Type<String>
             #[inline]
-            pub fn borrow(&self) -> $NAME<&str> {
+            pub fn borrow_inner_if_allocated(&self) -> $NAME<&str> {
                 $NAME(self.0.as_str())
             }
             /// Ownwing inner Type<String> -> Type<String> instead of &Type<String> -> Type<String>
             #[inline]
-            pub fn to_owned(&self) -> $NAME<String> {
+            pub fn to_owned_inner_if_ref(&self) -> $NAME<String> {
                 $NAME(self.0.clone())
             }
             /// Borrowing inner String as &str
@@ -53,22 +64,26 @@ macro_rules! fix_string {
             pub fn value(&self) -> &str {
                 self.0.as_str()
             }
+            #[inline]
+            pub fn into_inner(self) -> String {
+                self.0
+            }
         }
         impl Default for $NAME<String> {
             #[inline]
             fn default() -> Self {
-                <$NAME<&str>>::default().to_owned()
+                <$NAME<&str>>::default().to_owned_inner_if_ref()
             }
         }
         impl $NAME<fix_model_core::prelude::Ascii> {
             /// Borrowing inner Type<Ascii> -> Type<&asc> instead of Type<Ascii> -> &Type<Ascii>
             #[inline]
-            pub fn borrow(&self) -> $NAME<&fix_model_core::prelude::asc> {
+            pub fn borrow_inner_if_allocated(&self) -> $NAME<&fix_model_core::prelude::asc> {
                 $NAME(self.0.as_asc())
             }
             /// Ownwing inner Type<Ascii> -> Type<Ascii> instead of &Type<Ascii> -> Type<Ascii>
             #[inline]
-            pub fn to_owned(&self) -> $NAME<fix_model_core::prelude::Ascii> {
+            pub fn to_owned_inner_if_ref(&self) -> $NAME<fix_model_core::prelude::Ascii> {
                 $NAME(self.0.clone())
             }
             /// Borrowing inner Ascii as &asc
@@ -76,28 +91,44 @@ macro_rules! fix_string {
             pub fn value(&self) -> &fix_model_core::prelude::asc {
                 self.0.as_asc()
             }
+            #[inline]
+            pub fn into_inner(self) -> fix_model_core::prelude::Ascii {
+                self.0
+            }
+            #[inline]
+            pub fn as_str(&self) -> &str {
+                self.0.as_str()
+            }
         }
         impl Default for $NAME<fix_model_core::prelude::Ascii> {
             #[inline]
             fn default() -> Self {
-                <$NAME<&fix_model_core::prelude::asc>>::default().to_owned()
+                <$NAME<&fix_model_core::prelude::asc>>::default().to_owned_inner_if_ref()
             }
         }
-        impl $NAME<&fix_model_core::prelude::asc> {
+        impl<'a> $NAME<&'a fix_model_core::prelude::asc> {
             /// Ownwing inner Type<&asc> -> Type<Ascii> instead of &Type<&asc> -> Type<&asc>
             #[inline]
-            pub fn to_owned(&self) -> $NAME<fix_model_core::prelude::Ascii> {
+            pub fn to_owned_inner_if_ref(&self) -> $NAME<fix_model_core::prelude::Ascii> {
                 $NAME(self.0.to_owned())
             }
             /// Borrowing inner Type<&asc> -> Type<&asc> instead of Type<&asc> -> &Type<&asc>
             #[inline]
-            pub fn borrow(&self) -> $NAME<&fix_model_core::prelude::asc> {
+            pub fn borrow_inner_if_allocated(&self) -> $NAME<&fix_model_core::prelude::asc> {
                 $NAME(self.0)
             }
             /// Borrowing inner &asc as &asc
             #[inline]
             pub fn value(&self) -> &fix_model_core::prelude::asc {
                 self.0
+            }
+            #[inline]
+            pub fn into_inner(self) -> &'a fix_model_core::prelude::asc {
+                self.0
+            }
+            #[inline]
+            pub fn as_str(&self) -> &str {
+                self.0.as_str()
             }
         }
         impl<'a> Default for $NAME<&'a fix_model_core::prelude::asc> {
@@ -118,30 +149,17 @@ macro_rules! fix_string {
                 Self::new(value)
             }
         }
-        impl From<&str> for $NAME<String> {
-            #[inline]
-            fn from(value: &str) -> Self {
-                Self::new(value.to_owned())
-            }
-        }
         impl From<fix_model_core::prelude::Ascii> for $NAME<fix_model_core::prelude::Ascii> {
             #[inline]
             fn from(value: fix_model_core::prelude::Ascii) -> Self {
                 Self::new(value)
             }
         }
-        impl TryFrom<&str> for $NAME<fix_model_core::prelude::Ascii> {
+        impl TryFrom<String> for $NAME<fix_model_core::prelude::Ascii> {
             type Error = fix_model_core::prelude::Error;
             #[inline]
-            fn try_from(value: &str) -> fix_model_core::prelude::Result<Self> {
-                fix_model_core::prelude::Ascii::try_from(value).map(Self::new)
-            }
-        }
-        impl<const N: usize> TryFrom<&[u8; N]> for $NAME<fix_model_core::prelude::Ascii> {
-            type Error = fix_model_core::prelude::Error;
-            #[inline]
-            fn try_from(value: &[u8; N]) -> fix_model_core::prelude::Result<Self> {
-                fix_model_core::prelude::Ascii::try_from(value.as_slice()).map(Self::new)
+            fn try_from(value: String) -> fix_model_core::prelude::Result<Self> {
+                Ok(Self::new(fix_model_core::prelude::Ascii::try_from(value)?))
             }
         }
         impl TryFrom<&str> for $NAME<&fix_model_core::prelude::asc> {
@@ -161,15 +179,18 @@ macro_rules! fix_string {
         $crate::_debug!($NAME, <S>);
         $crate::_display!($NAME, <S>);
         $crate::_impl_field_meta!($NAME, $TAG, <S>);
-    };
+    }
 }
 pub use fix_string;
 
 #[macro_export]
 macro_rules! fix_char_any {
     ($NAME:ident, $TAG:literal) => {
+        $crate::fix_char_any!($NAME, $TAG, pub);
+    };
+    ($NAME:ident, $TAG:literal, $VIS:vis) => {
         #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Copy)]
-        pub struct $NAME<C>(C);
+        $VIS struct $NAME<C>(C);
         impl<C> $NAME<C> {
             #[inline]
             pub fn new(value: C) -> Self {
@@ -187,6 +208,10 @@ macro_rules! fix_char_any {
             pub fn value(&self) -> char {
                 self.0
             }
+            #[inline]
+            pub fn into_inner(self) -> char {
+                self.0
+            }
         }
         impl Default for $NAME<char> {
             #[inline]
@@ -197,6 +222,10 @@ macro_rules! fix_char_any {
         impl $NAME<fix_model_core::prelude::aschar> {
             #[inline]
             pub fn value(&self) -> fix_model_core::prelude::aschar {
+                self.0
+            }
+            #[inline]
+            pub fn into_inner(self) -> fix_model_core::prelude::aschar {
                 self.0
             }
         }
@@ -242,16 +271,22 @@ macro_rules! fix_char_any {
         $crate::_impl_field_meta!($NAME, $TAG, <C>);
         $crate::_debug!($NAME, <C>);
         $crate::_display!($NAME, <C>);
-    };
+    }
 }
 pub use fix_char_any;
 
 // TODO how to serialize ENUM with json using Variant Name instead of Variant Value
 #[macro_export]
 macro_rules! fix_ascii_char_enum {
-    ($NAME:ident, $TAG:literal, $($VARIANT:tt : $VALUE:literal),*, ) => {
+    ($NAME:ident, $TAG:literal, $($VARIANT:tt : $VALUE:literal),* , ) => { // closing comma variant
+        $crate::fix_ascii_char_enum!($NAME, $TAG, pub, $($VARIANT: $VALUE),* , );
+    };
+    ($NAME:ident, $TAG:literal, $($VARIANT:tt : $VALUE:literal),* ) => { // NO closing comma variant
+        $crate::fix_ascii_char_enum!($NAME, $TAG, pub, $($VARIANT: $VALUE),* , );
+    };
+    ($NAME:ident, $TAG:literal, $VIS:vis, $($VARIANT:tt : $VALUE:literal),*, ) => {
         #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Copy, Default)]
-        pub enum $NAME{
+        $VIS enum $NAME{
             #[default]
             $(
                 #[serde(rename = $VALUE)]
@@ -270,13 +305,9 @@ macro_rules! fix_ascii_char_enum {
                 }
             }
         }
-        // $crate::_impl_new_and_value!($NAME, char);
         $crate::_impl_field_meta!($NAME, $TAG);
         $crate::_debug!($NAME, $($VARIANT: $VALUE),+);
         $crate::_display!($NAME, $($VARIANT: $VALUE),+);
-    };
-    ($NAME:ident, $TAG:literal, $($VARIANT:tt : $VALUE:literal),* ) => {
-        $crate::fix_ascii_char_enum!($NAME, $TAG, $($VARIANT: $VALUE),* , );
     }
 }
 pub use fix_ascii_char_enum;
@@ -284,7 +315,9 @@ pub use fix_ascii_char_enum;
 #[macro_export]
 macro_rules! fix_data {
     ($NAME_LEN:ident, $TAG_LEN:literal, $NAME_DATA:ident, $TAG_DATA:literal) => {
-        #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Copy)]
+        // Implemented via derive(Default) while expecting inner to panic so that it is only possiblt to initialize
+        // Option<$NAME<S>> instead of $NAME<S> directly
+        #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Default)]
         pub struct $NAME_DATA<D>(D);
         impl<D> $NAME_DATA<D> {
             #[inline]
@@ -292,15 +325,21 @@ macro_rules! fix_data {
                 Self(value)
             }
         }
-        impl $NAME_DATA<&fix_model_core::prelude::dat> {
+        impl<D: AsRef<fix_model_core::prelude::dat>> AsRef<fix_model_core::prelude::dat> for $NAME_DATA<D> {
+            #[inline]
+            fn as_ref(&self) -> &fix_model_core::prelude::dat {
+                self.0.as_ref()
+            }
+        }
+        impl<'a> $NAME_DATA<&'a fix_model_core::prelude::dat> {
             /// Ownwing inner Type<&str> -> Type<String> instead of &Type<&str> -> Type<&str>
             #[inline]
-            pub fn to_owned(&self) -> $NAME_DATA<fix_model_core::prelude::Data> {
+            pub fn to_owned_inner_if_ref(&self) -> $NAME_DATA<fix_model_core::prelude::Data> {
                 $NAME_DATA(self.0.to_owned())
             }
             /// Borrowing inner Type<&str> -> Type<&str> instead of Type<&str> -> &Type<&str>
             #[inline]
-            pub fn borrow(&self) -> $NAME_DATA<&fix_model_core::prelude::dat> {
+            pub fn borrow_inner_if_allocated(&self) -> $NAME_DATA<&fix_model_core::prelude::dat> {
                 $NAME_DATA(self.0)
             }
             /// Borrowing inner &str as &str
@@ -308,16 +347,25 @@ macro_rules! fix_data {
             pub fn value(&self) -> &fix_model_core::prelude::dat {
                 self.0
             }
+
+            #[inline]
+            pub fn as_dat(&self) -> &fix_model_core::prelude::dat {
+                self.0
+            }
+            #[inline]
+            pub fn into_inner(self) -> &'a fix_model_core::prelude::dat {
+                self.0
+            }
         }
         impl $NAME_DATA<fix_model_core::prelude::Data> {
             /// Ownwing inner Type<&str> -> Type<String> instead of &Type<&str> -> Type<&str>
             #[inline]
-            pub fn to_owned(&self) -> $NAME_DATA<fix_model_core::prelude::Data> {
+            pub fn to_owned_inner_if_ref(&self) -> $NAME_DATA<fix_model_core::prelude::Data> {
                 $NAME_DATA(self.0.to_owned())
             }
             /// Borrowing inner Type<&str> -> Type<&str> instead of Type<&str> -> &Type<&str>
             #[inline]
-            pub fn borrow(&self) -> $NAME_DATA<&fix_model_core::prelude::dat> {
+            pub fn borrow_inner_if_allocated(&self) -> $NAME_DATA<&fix_model_core::prelude::dat> {
                 $NAME_DATA(self.0.as_dat())
             }
             /// Borrowing inner &str as &str
@@ -325,17 +373,25 @@ macro_rules! fix_data {
             pub fn value(&self) -> &fix_model_core::prelude::dat {
                 self.0.as_dat()
             }
+            #[inline]
+            pub fn as_dat(&self) -> &fix_model_core::prelude::dat {
+                self.0.as_dat()
+            }
+            #[inline]
+            pub fn into_inner(self) -> fix_model_core::prelude::Data {
+                self.0
+            }
         }
         impl<'a> $NAME_DATA<fix_model_core::prelude::dat_codec<'a>> {
-            /// Borrowing inner Type<Ascii> -> Type<&asc> instead of Type<Ascii> -> &Type<Ascii>
+            /// Borrowing inner Type<dat_codec> -> Type<&dat>
             #[inline]
-            pub fn borrow(&self) -> $NAME_DATA<&fix_model_core::prelude::dat> {
+            pub fn borrow_inner_if_allocated(&self) -> $NAME_DATA<&fix_model_core::prelude::dat> {
                 $NAME_DATA(self.0.as_dat())
             }
-            /// Ownwing inner Type<Ascii> -> Type<Ascii> instead of &Type<Ascii> -> Type<Ascii>
+            /// Ownwing inner Type<dat_codec> -> Type<Data>
             #[inline]
-            pub fn to_owned(&self) -> $NAME_DATA<fix_model_core::prelude::Data> {
-                $NAME_DATA(self.0.as_dat().to_owned())
+            pub fn to_owned_inner_if_ref(&self) -> $NAME_DATA<fix_model_core::prelude::Data> {
+                $NAME_DATA(self.0.to_owned())
             }
             /// Borrowing inner Ascii as &asc
             #[inline]
@@ -343,9 +399,18 @@ macro_rules! fix_data {
                 self.0.as_dat()
             }
             #[inline]
+            pub fn as_dat(&self) -> &fix_model_core::prelude::dat {
+                self.0.as_dat()
+            }
+            #[inline]
+            pub fn into_inner(self) -> fix_model_core::prelude::dat_codec<'a> {
+                self.0
+            }
+            #[inline]
             pub fn decode(&mut self) -> Result<(), fix_model_core::prelude::Error> {
                 self.0.decode()
             }
+
         }
         impl From<Vec<u8>> for $NAME_DATA<fix_model_core::prelude::Data> {
             #[inline]
@@ -383,19 +448,6 @@ macro_rules! fix_data {
                 $NAME_DATA(value.as_slice().into())
             }
         }
-        impl Default for $NAME_DATA<fix_model_core::prelude::Data> {
-            #[inline]
-            fn default() -> Self {
-                <$NAME_DATA<&fix_model_core::prelude::dat>>::default().to_owned()
-            }
-        }
-        impl Default for $NAME_DATA<&fix_model_core::prelude::dat> {
-            #[inline]
-            fn default() -> Self {
-                $NAME_DATA(fix_model_core::prelude::dat::from_slice(concat!(stringify!($NAME_DATA), ":", stringify!($TAG_DATA), "@Default").as_bytes()))
-            }
-        }
-
         impl<D: std::fmt::Display + std::fmt::Debug> std::fmt::Display for $NAME_DATA<D>{
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 use fix_model_core::prelude::FieldMeta;
@@ -421,10 +473,73 @@ macro_rules! fix_data {
 pub use fix_data;
 
 #[macro_export]
+macro_rules! _fix_numeric_fixed_length {
+    ($NAME:ident, $TAG:literal, $VIS:vis, $TY:tt, $LEN:literal) => {
+        #[derive(serde::Deserialize, PartialEq, Clone, Default, Copy)]
+        $VIS struct $NAME($TY);
+        impl serde::Serialize for $NAME {
+            fn serialize<S: serde::Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
+                if serializer.is_human_readable() {
+                    serializer.serialize_u64(self.0 as u64)
+                } else {
+                    let mut buf = itoa::Buffer::new();
+                    let value = buf.format(self.0);
+                    use std::io::Write;
+                    let mut buf_pad = [0u8; $LEN];
+                    write!(&mut buf_pad[..], concat!("{:0>", stringify!($LEN), "}"), value).expect(concat!(
+                        "Failed serialize ",
+                        stringify!($NAME),
+                        "(",
+                        stringify!($TY),
+                        ")",
+                        " into a buffer of size ",
+                        stringify!($LEN)
+                    ));
+                    serializer.serialize_bytes(&buf_pad)
+                }
+            }
+        }
+        impl From<$TY> for $NAME {
+            #[inline]
+            fn from(value: $TY) -> Self {
+                Self::new(value)
+            }
+        }
+        $crate::_impl_new_and_value!($NAME, $TY);
+        $crate::_impl_field_meta!($NAME, $TAG);
+        $crate::_debug!($NAME);
+        $crate::_display!($NAME);
+    }
+}
+#[macro_export]
+macro_rules! fix_usize_fixed_length {
+    ($NAME:ident, $TAG:literal) => {
+        $crate::_fix_numeric_fixed_length!($NAME, $TAG, pub, usize, 20);
+    };
+    ($NAME:ident, $TAG:literal, $VIS:vis) => {
+        $crate::_fix_numeric_fixed_length!($NAME, $TAG, $VIS, usize, 20);
+    };
+}
+pub use fix_usize_fixed_length;
+#[macro_export]
+macro_rules! fix_u8_fixed_length {
+    ($NAME:ident, $TAG:literal) => {
+        $crate::_fix_numeric_fixed_length!($NAME, $TAG, pub, u8, 3);
+    };
+    ($NAME:ident, $TAG:literal, $VIS:vis) => {
+        $crate::_fix_numeric_fixed_length!($NAME, $TAG, $VIS, u8, 3);
+    };
+}
+pub use fix_u8_fixed_length;
+
+#[macro_export]
 macro_rules! _fix_numeric {
     ($NAME:ident, $TAG:literal, $TY:tt) => {
-        #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Default)]
-        pub struct $NAME($TY);
+        $crate::_fix_numeric!($NAME, $TAG, pub, $TY);
+    };
+    ($NAME:ident, $TAG:literal, $VIS:vis, $TY:tt) => {
+        #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Default, Copy)]
+        $VIS struct $NAME($TY);
         impl From<$TY> for $NAME {
             #[inline]
             fn from(value: $TY) -> Self {
@@ -437,10 +552,14 @@ macro_rules! _fix_numeric {
         $crate::_display!($NAME);
     };
 }
+
 #[macro_export]
 macro_rules! fix_usize {
     ($NAME:ident, $TAG:literal) => {
-        $crate::_fix_numeric!($NAME, $TAG, usize);
+        $crate::_fix_numeric!($NAME, $TAG, pub, usize);
+    };
+    ($NAME:ident, $TAG:literal, $VIS:vis) => {
+        $crate::_fix_numeric!($NAME, $TAG, $VIS, usize);
     };
 }
 pub use fix_usize;
@@ -450,13 +569,19 @@ macro_rules! fix_isize {
     ($NAME:ident, $TAG:literal) => {
         $crate::_fix_numeric!($NAME, $TAG, isize);
     };
+    ($NAME:ident, $TAG:literal, $VIS:vis) => {
+        $crate::_fix_numeric!($NAME, $TAG, $VIS, isize);
+    };
 }
 pub use fix_isize;
 
 #[macro_export]
 macro_rules! fix_float64 {
     ($NAME:ident, $TAG:literal) => {
-        $crate::_fix_numeric!($NAME, $TAG, f64);
+        $crate::_fix_numeric!($NAME, $TAG, pub, f64);
+    };
+    ($NAME:ident, $TAG:literal, $VIS:vis) => {
+        $crate::_fix_numeric!($NAME, $TAG, $VIS, f64);
     };
 }
 pub use fix_float64;
@@ -465,16 +590,22 @@ macro_rules! fix_float32 {
     ($NAME:ident, $TAG:literal) => {
         $crate::_fix_numeric!($NAME, $TAG, f32);
     };
+    ($NAME:ident, $TAG:literal, $VIS:vis) => {
+        $crate::_fix_numeric!($NAME, $TAG, $VIS, f32);
+    };
 }
 pub use fix_float32;
 
 #[macro_export]
 macro_rules! fix_bool {
     ($NAME:ident, $TAG:literal) => {
+        $crate::fix_bool!($NAME, $TAG, pub);
+    };
+    ($NAME:ident, $TAG:literal, $VIS:vis) => {
         /// FIX boolean field, represented as a char 'Y' or 'N' because we want both fix serializer to
         /// output a char and not have a special boolean serialization/deserialization logic
-        #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Default)]
-        pub struct $NAME(bool);
+        #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Default, Copy)]
+        $VIS struct $NAME(bool);
         impl From<bool> for $NAME {
             #[inline]
             fn from(value: bool) -> Self {

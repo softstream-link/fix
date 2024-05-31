@@ -2,6 +2,7 @@ pub trait FixByteSlice2Display {
     fn to_string(&self) -> String;
 }
 impl FixByteSlice2Display for &[u8] {
+    #[allow(clippy::collapsible_str_replace)]
     fn to_string(&self) -> String {
         String::from_utf8_lossy(self)
             // .replace('\x01', "|")
@@ -17,7 +18,7 @@ impl FixByteSlice2Display for &[u8] {
 }
 impl FixByteSlice2Display for Vec<u8> {
     fn to_string(&self) -> String {
-        format!("{}", self.as_slice().to_string())
+        self.as_slice().to_string()
         // let v = self.as_slice(); // TODO why does this not work
         // v.to_string()
     }

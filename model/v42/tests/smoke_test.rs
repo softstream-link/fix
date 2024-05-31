@@ -24,12 +24,12 @@ fn test_logon() {
     info!("msg_type: {:?}", msg.msg_type());
     info!("msg: {:?}", msg);
 
-    let fix = fix_serde::to_bytes_with_schema(&msg, None, Fix42Schema).unwrap();
+    let fix = fix_serde::to_bytes_with_schema::<_, Fix42Schema>(&msg, None).unwrap();
     info!("fix: {}", fix);
     let json = serde_json::to_string(&msg).unwrap();
     info!("json: {}", json);
 
-    let fix_out: Logon<&str, dat_codec> = fix_serde::from_slice_with_schema(&fix, Fix42Schema).unwrap();
+    let fix_out: Logon<&str, dat_codec> = fix_serde::from_slice_with_schema::<_, Fix42Schema>(&fix).unwrap();
     assert_eq!(msg, fix_out);
 
     let mut json_out: Logon<&str, dat_codec> = serde_json::from_str(&json).unwrap();
@@ -52,7 +52,7 @@ fn test_generated_test_request() {
 #[test]
 fn test_generated_new_order_single() {
     setup::log::configure();
-    let s = NewOrderSingle::<String, char, Data> {
+    let s = NewOrderSingle::<&str, char, Data> {
         cl_ord_id: "cl_ord_id".into(),
         symbol: "IBM".into(),
         handl_inst: HandlInst::AutomatedExecutionOrderPrivateNoBrokerIntervention,

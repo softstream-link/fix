@@ -136,11 +136,15 @@ impl RMessageMember {
                     // account: self.account.to_owned_inner_if_ref(),
                     quote!( #member_ident: self.#member_ident.to_owned_inner_if_ref() , )
                 } else {
+                    // quote!(
+                    //     #member_ident: match &self.#member_ident {
+                    //         Some(v) => Some(v.to_owned_inner_if_ref()) ,
+                    //         None => None,
+                    //     } ,
+                    // )
+                    // self.r#underlying_stip_value.as_ref().map(|v| v.to_owned_inner_if_ref())
                     quote!(
-                        #member_ident: match &self.#member_ident {
-                            Some(v) => Some(v.to_owned_inner_if_ref()) ,
-                            None => None,
-                        } ,
+                        #member_ident: self.#member_ident.as_ref().map(|v| v.to_owned_inner_if_ref()) ,
                     )
                 }
             }
@@ -150,11 +154,14 @@ impl RMessageMember {
                     // rep_grp: self.rep_grp.iter().map(|rep_grp| rep_grp.to_owned_inner_if_ref()).collect(),
                     quote!( #member_ident: self.#member_ident.iter().map(|rep_grp| rep_grp.to_owned_inner_if_ref()).collect() , )
                 } else {
+                    // quote!(
+                    //     #member_ident: match &self.#member_ident {
+                    //         Some(v) => Some(v.iter().map(|rep_grp| rep_grp.to_owned_inner_if_ref()).collect()),
+                    //         None => None,
+                    //     } ,
+                    // )
                     quote!(
-                        #member_ident: match &self.#member_ident {
-                            Some(v) => Some(v.iter().map(|rep_grp| rep_grp.to_owned_inner_if_ref()).collect()),
-                            None => None,
-                        } ,
+                        #member_ident: self.#member_ident.as_ref().map(|v| v.iter().map(|rep_grp| rep_grp.to_owned_inner_if_ref()).collect()),
                     )
                 }
             }
@@ -163,17 +170,17 @@ impl RMessageMember {
                 if self.required {
                     quote!( #member_ident: self.#member_ident, )
                 } else {
+                    // quote!(
+                    //     #member_ident: match &self.#member_ident {
+                    //         Some(v) => Some(*v),
+                    //         None => None,
+                    //     } ,
+                    // )
                     quote!(
-                        #member_ident: match &self.#member_ident {
-                            Some(v) => Some(*v),
-                            None => None,
-                        } ,
+                        #member_ident: self.#member_ident.as_ref().map(|v| *v) ,
                     )
                 }
             }
-            // _ => {
-            //     quote!()
-            // }
         }
     }
 }

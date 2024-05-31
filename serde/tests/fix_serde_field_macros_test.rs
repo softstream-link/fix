@@ -1,6 +1,6 @@
 use fix_model_core::{
     prelude::{asc, Ascii},
-    types::{asciichar::aschar, dat::dat, dat_codec::dat_codec, data::Data},
+    types::{asciichar::aschar, dat::dat, data::Data},
 };
 use fix_model_generator::{
     fix_u8_fixed_length, fix_usize_fixed_length,
@@ -18,6 +18,7 @@ fn test_data_dat_codec_dat() {
 
     fix_data!(RawDataLength, 95, RawData, 96);
 
+    // dat
     let inp = RawData::new(dat::from_slice(b"BINBIN"));
     let fix_ser = to_bytes_unittest(&inp).unwrap();
     info!("fix_ser: {}", fix_ser);
@@ -30,6 +31,8 @@ fn test_data_dat_codec_dat() {
     info!("fix_out: {:?}", fix_out);
     assert_eq!(inp, fix_out);
 
+
+    // Data
     let inp = RawData::new(Data::from_slice(b"BIN\x00BIN"));
     let fix_ser = to_bytes_unittest(&inp).unwrap();
     info!("fix_ser: {}", fix_ser);
@@ -42,8 +45,6 @@ fn test_data_dat_codec_dat() {
     let fix_out = from_slice_unittest::<RawData<Data>>(&fix_ser).unwrap();
     info!("fix_out: {:?}", fix_out);
     assert_eq!(inp, fix_out);
-
-
 }
 
 #[test]

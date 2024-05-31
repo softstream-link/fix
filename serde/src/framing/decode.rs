@@ -118,6 +118,7 @@ impl<'de, X: Schema> FrameDecoder<'de, X> {
             }
         }
     }
+    #[allow(clippy::type_complexity)]
     pub fn deserialize_msg<S, C, D>(&mut self) -> Result<(Option<X::AdmType<S, C, D>>, Option<X::AppType<S, C, D>>)>
     where
         S: serde::Deserialize<'de>,

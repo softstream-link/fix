@@ -37,6 +37,7 @@ pub trait Schema {
     }
     fn binary_data_len_pair_index() -> TagTypesSorted;
 
+    #[allow(clippy::type_complexity)]
     fn deserializer_msg<'de, __D, S, C, D>(
         msg_type: &str,
         deserializer: __D,

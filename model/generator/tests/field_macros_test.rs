@@ -3,7 +3,8 @@ use fix_model_core::{
     types::{asciichar::aschar, dat::dat, data::Data},
 };
 use fix_model_generator::{
-    fix_u8_fixed_length, fix_usize_fixed_length, prelude::{fix_ascii_char_enum, fix_bool, fix_char_any, fix_data, fix_string, fix_usize}
+    fix_u8_fixed_length, fix_usize_fixed_length,
+    prelude::{fix_ascii_char_enum, fix_bool, fix_char_any, fix_data, fix_string, fix_usize},
 };
 use fix_model_test::unittest::setup;
 use fix_serde::unittest::{from_slice_unittest, to_bytes_unittest};
@@ -17,16 +18,27 @@ fn test_data_dat_codec_dat() {
 
     fix_data!(RawDataLength, 95, RawData, 96);
 
+    // &dat
     let _inp = RawData::new(dat::from_slice(b"\x00BIN"));
     let _inp = RawData::new(dat::from_slice(&vec![1, 2]));
     let _inp: RawData<&dat> = b"BIN".as_slice().into();
     let _inp: RawData<&dat> = b"BIN".into();
+    let _own = _inp.to_owned_inner_if_ref();
+    let _borrow = _inp.borrow_inner_if_allocated();
+    let _ref = _inp.as_ref();
+    let _dat = _inp.as_dat();
+    let _inner = _inp.into_inner();
 
     let _inp = RawData::new(Data::from_slice(b"\x00BIN"));
     let _inp = RawData::new(Data::from_slice(&vec![1, 2]));
     let _inp = RawData::new(Data::from_vec(vec![1, 2]));
     let _inp: RawData<Data> = vec![1, 2].into();
     let _inp: RawData<Data> = b"BIN".into();
+    let _own = _inp.to_owned();
+    let _borrow = _inp.borrow_inner_if_allocated();
+    let _ref = _inp.as_ref();
+    let _dat = _inp.as_dat();
+    let _inner = _inp.into_inner();
 
     let inp = RawData::new(Data::from_slice(b"\x00BIN"));
 
@@ -61,22 +73,51 @@ fn test_fix_string_str_ascii_asc() {
     let _inp: Account<_> = "ABC".into();
     let _inp: Account<&str> = "ABC".into();
     let _inp: Account<&str> = Default::default();
+    
+    let _own = _inp.to_owned_inner_if_ref();
+    let _borrow = _inp.borrow_inner_if_allocated();
+    let _ref = _inp.as_ref();
+    let _str = _inp.as_str();
+    let _inner = _inp.into_inner();
+    info!("Account<&str>::default '{}'", Account::<&str>::default());
 
+
+    // String
     let _inp = Account::new("ABC".to_owned());
     let _inp: Account<String> = Account::new("ABC".into());
     let _inp: Account<String> = "ABC".to_owned().into();
-    // let _inp: Account<String> = "ABC".into();
     let _inp: Account<String> = Default::default();
 
+    let _own = _inp.to_owned();
+    let _borrow = _inp.borrow_inner_if_allocated();
+    let _ref = _inp.as_ref();
+    let _inner = _inp.into_inner();
+    info!("Account<String>::default '{}'", Account::<String>::default());
+
+    // &asc
     let _inp = Account::new(asc::try_from_str("ABC").unwrap());
     let _inp: Account<&asc> = Account::new("ABC".try_into().unwrap());
     let _inp: Account<&asc> = "ABC".try_into().unwrap();
     let _inp: Account<&asc> = b"ABC".try_into().unwrap();
     let _inp: Account<&asc> = Default::default();
 
-    let _inp = Account::new(Ascii::try_from("ABC".to_owned()).unwrap());
+    let _own = _inp.to_owned_inner_if_ref();
+    let _borrow = _inp.borrow_inner_if_allocated();
+    let _ref = _inp.as_ref();
+    let _str = _inp.as_str();
+    let _inner = _inp.into_inner();
+    info!("Account<&asc>::default '{}'", Account::<&asc>::default());
+
+    // Ascii
+    let _inp: Account<Ascii> = Account::new(Ascii::try_from("ABC".to_owned()).unwrap());
     let _inp: Account<Ascii> = "ABC".to_owned().try_into().unwrap();
     let _inp: Account<Ascii> = Default::default();
+
+    let _own = _inp.to_owned_inner_if_ref();
+    let _borrow = _inp.borrow_inner_if_allocated();
+    let _ref = _inp.as_ref();
+    let _str = _inp.as_str();
+    let _inner = _inp.into_inner();
     info!("Account<Ascii>::default '{}'", Account::<Ascii>::default());
 
     let inp = Account::new("ABC".to_owned());
@@ -111,9 +152,6 @@ fn test_fix_string_str_ascii_asc() {
     info!("jsn_out: {:?}", jsn_out);
     assert_eq!(jsn_out, fix_out);
     assert_eq!(fix_out.value(), "ABC");
-    let _own = fix_out.to_owned();
-    let _borrow = fix_out.borrow();
-    let _ref = fix_out.as_ref();
 
     info!("Account<&str>");
     let fix_out = from_slice_unittest::<Account<&str>>(&fix_ser).unwrap();
@@ -122,9 +160,6 @@ fn test_fix_string_str_ascii_asc() {
     info!("jsn_out: {:?}", jsn_out);
     assert_eq!(jsn_out, fix_out);
     assert_eq!(fix_out.value(), "ABC");
-    let _own = fix_out.to_owned();
-    let _borrow = fix_out.borrow();
-    let _ref = fix_out.as_ref();
 
     info!("Account<Ascii>");
     let fix_out = from_slice_unittest::<Account<Ascii>>(&fix_ser).unwrap();
@@ -133,9 +168,6 @@ fn test_fix_string_str_ascii_asc() {
     info!("jsn_out: {:?}", jsn_out);
     assert_eq!(jsn_out, fix_out);
     assert_eq!(fix_out.value(), asc::try_from_str("ABC").unwrap());
-    let _own = fix_out.to_owned();
-    let _borrow = fix_out.borrow();
-    let _ref = fix_out.as_ref();
 
     info!("Account<&asc>");
     let fix_out = from_slice_unittest::<Account<&asc>>(&fix_ser).unwrap();
@@ -144,9 +176,6 @@ fn test_fix_string_str_ascii_asc() {
     info!("jsn_out: {:?}", jsn_out);
     assert_eq!(jsn_out, fix_out);
     assert_eq!(fix_out.value(), asc::try_from_slice(b"ABC").unwrap());
-    let _own = fix_out.to_owned();
-    let _borrow = fix_out.borrow();
-    let _ref = fix_out.as_ref();
 }
 
 #[test]
@@ -158,12 +187,14 @@ fn test_char_any() {
     let _inp = IOIOthSvc::new('A');
     let _inp = IOIOthSvc::<char>::new('A');
     let _inp: IOIOthSvc<char> = 'A'.into();
+    let _inner = _inp.into_inner();
     let _inp: IOIOthSvc<char> = Default::default();
 
     let _inp = IOIOthSvc::new(aschar::try_from('A').unwrap());
     let _inp = IOIOthSvc::<aschar>::new('A'.try_into().unwrap());
     let _inp: IOIOthSvc<aschar> = 'A'.try_into().unwrap();
     let _inp: IOIOthSvc<aschar> = b'A'.try_into().unwrap();
+    let _inner = _inp.into_inner();
     let _inp: IOIOthSvc<aschar> = Default::default();
 
     let inp: IOIOthSvc<char> = 'A'.into();
@@ -248,7 +279,6 @@ fn test_char_enum() {
     info!("jsn_out: {:?}", jsn_out);
     assert_eq!(jsn_out, fix_out);
 }
-
 
 #[test]
 fn test_fix_u8_fixed_len() {

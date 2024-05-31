@@ -22,11 +22,6 @@ impl Ascii {
         let fix_str: &asc = self.borrow();
         fix_str.as_str()
     }
-
-    // #[inline]
-    // pub fn try_from_str(value: &str) -> Result<Self> {
-    //     Ascii::try_from(value)
-    // }
     #[inline]
     pub fn as_asc(&self) -> &asc {
         self.deref()

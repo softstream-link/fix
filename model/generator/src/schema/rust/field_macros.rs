@@ -17,20 +17,28 @@ macro_rules! fix_string {
                 self.0.as_ref()
             }
         }
-        impl $NAME<&str> {
+        impl<'a> $NAME<&'a str> {
             /// Ownwing inner Type<&str> -> Type<String> instead of &Type<&str> -> Type<&str>
             #[inline]
-            pub fn to_owned(&self) -> $NAME<String> {
+            pub fn to_owned_inner_if_ref(&self) -> $NAME<String> {
                 $NAME(self.0.to_owned())
             }
             /// Borrowing inner Type<&str> -> Type<&str> instead of Type<&str> -> &Type<&str>
             #[inline]
-            pub fn borrow(&self) -> $NAME<&str> {
+            pub fn borrow_inner_if_allocated(&self) -> $NAME<&str> {
                 $NAME(self.0)
             }
             /// Borrowing inner &str as &str
             #[inline]
             pub fn value(&self) -> &str {
+                self.0
+            }
+            #[inline]
+            pub fn into_inner(self) -> &'a str {
+                self.0
+            }
+            #[inline]
+            pub fn as_str(&self) -> &str {
                 self.0
             }
         }
@@ -43,12 +51,12 @@ macro_rules! fix_string {
         impl $NAME<String> {
             /// Borrowing inner Type<String> -> Type<&str> instead of Type<String> -> &Type<String>
             #[inline]
-            pub fn borrow(&self) -> $NAME<&str> {
+            pub fn borrow_inner_if_allocated(&self) -> $NAME<&str> {
                 $NAME(self.0.as_str())
             }
             /// Ownwing inner Type<String> -> Type<String> instead of &Type<String> -> Type<String>
             #[inline]
-            pub fn to_owned(&self) -> $NAME<String> {
+            pub fn to_owned_inner_if_ref(&self) -> $NAME<String> {
                 $NAME(self.0.clone())
             }
             /// Borrowing inner String as &str
@@ -56,22 +64,26 @@ macro_rules! fix_string {
             pub fn value(&self) -> &str {
                 self.0.as_str()
             }
+            #[inline]
+            pub fn into_inner(self) -> String {
+                self.0
+            }
         }
         impl Default for $NAME<String> {
             #[inline]
             fn default() -> Self {
-                <$NAME<&str>>::default().to_owned()
+                <$NAME<&str>>::default().to_owned_inner_if_ref()
             }
         }
         impl $NAME<fix_model_core::prelude::Ascii> {
             /// Borrowing inner Type<Ascii> -> Type<&asc> instead of Type<Ascii> -> &Type<Ascii>
             #[inline]
-            pub fn borrow(&self) -> $NAME<&fix_model_core::prelude::asc> {
+            pub fn borrow_inner_if_allocated(&self) -> $NAME<&fix_model_core::prelude::asc> {
                 $NAME(self.0.as_asc())
             }
             /// Ownwing inner Type<Ascii> -> Type<Ascii> instead of &Type<Ascii> -> Type<Ascii>
             #[inline]
-            pub fn to_owned(&self) -> $NAME<fix_model_core::prelude::Ascii> {
+            pub fn to_owned_inner_if_ref(&self) -> $NAME<fix_model_core::prelude::Ascii> {
                 $NAME(self.0.clone())
             }
             /// Borrowing inner Ascii as &asc
@@ -79,28 +91,44 @@ macro_rules! fix_string {
             pub fn value(&self) -> &fix_model_core::prelude::asc {
                 self.0.as_asc()
             }
+            #[inline]
+            pub fn into_inner(self) -> fix_model_core::prelude::Ascii {
+                self.0
+            }
+            #[inline]
+            pub fn as_str(&self) -> &str {
+                self.0.as_str()
+            }
         }
         impl Default for $NAME<fix_model_core::prelude::Ascii> {
             #[inline]
             fn default() -> Self {
-                <$NAME<&fix_model_core::prelude::asc>>::default().to_owned()
+                <$NAME<&fix_model_core::prelude::asc>>::default().to_owned_inner_if_ref()
             }
         }
-        impl $NAME<&fix_model_core::prelude::asc> {
+        impl<'a> $NAME<&'a fix_model_core::prelude::asc> {
             /// Ownwing inner Type<&asc> -> Type<Ascii> instead of &Type<&asc> -> Type<&asc>
             #[inline]
-            pub fn to_owned(&self) -> $NAME<fix_model_core::prelude::Ascii> {
+            pub fn to_owned_inner_if_ref(&self) -> $NAME<fix_model_core::prelude::Ascii> {
                 $NAME(self.0.to_owned())
             }
             /// Borrowing inner Type<&asc> -> Type<&asc> instead of Type<&asc> -> &Type<&asc>
             #[inline]
-            pub fn borrow(&self) -> $NAME<&fix_model_core::prelude::asc> {
+            pub fn borrow_inner_if_allocated(&self) -> $NAME<&fix_model_core::prelude::asc> {
                 $NAME(self.0)
             }
             /// Borrowing inner &asc as &asc
             #[inline]
             pub fn value(&self) -> &fix_model_core::prelude::asc {
                 self.0
+            }
+            #[inline]
+            pub fn into_inner(self) -> &'a fix_model_core::prelude::asc {
+                self.0
+            }
+            #[inline]
+            pub fn as_str(&self) -> &str {
+                self.0.as_str()
             }
         }
         impl<'a> Default for $NAME<&'a fix_model_core::prelude::asc> {
@@ -180,6 +208,10 @@ macro_rules! fix_char_any {
             pub fn value(&self) -> char {
                 self.0
             }
+            #[inline]
+            pub fn into_inner(self) -> char {
+                self.0
+            }
         }
         impl Default for $NAME<char> {
             #[inline]
@@ -190,6 +222,10 @@ macro_rules! fix_char_any {
         impl $NAME<fix_model_core::prelude::aschar> {
             #[inline]
             pub fn value(&self) -> fix_model_core::prelude::aschar {
+                self.0
+            }
+            #[inline]
+            pub fn into_inner(self) -> fix_model_core::prelude::aschar {
                 self.0
             }
         }
@@ -287,15 +323,21 @@ macro_rules! fix_data {
                 Self(value)
             }
         }
-        impl $NAME_DATA<&fix_model_core::prelude::dat> {
+        impl<D: AsRef<fix_model_core::prelude::dat>> $NAME_DATA<D> {
+            #[inline]
+            fn as_ref(&self) -> &fix_model_core::prelude::dat {
+                self.0.as_ref()
+            }
+        }
+        impl<'a> $NAME_DATA<&'a fix_model_core::prelude::dat> {
             /// Ownwing inner Type<&str> -> Type<String> instead of &Type<&str> -> Type<&str>
             #[inline]
-            pub fn to_owned(&self) -> $NAME_DATA<fix_model_core::prelude::Data> {
+            pub fn to_owned_inner_if_ref(&self) -> $NAME_DATA<fix_model_core::prelude::Data> {
                 $NAME_DATA(self.0.to_owned())
             }
             /// Borrowing inner Type<&str> -> Type<&str> instead of Type<&str> -> &Type<&str>
             #[inline]
-            pub fn borrow(&self) -> $NAME_DATA<&fix_model_core::prelude::dat> {
+            pub fn borrow_inner_if_allocated(&self) -> $NAME_DATA<&fix_model_core::prelude::dat> {
                 $NAME_DATA(self.0)
             }
             /// Borrowing inner &str as &str
@@ -303,22 +345,39 @@ macro_rules! fix_data {
             pub fn value(&self) -> &fix_model_core::prelude::dat {
                 self.0
             }
+
+            #[inline]
+            pub fn as_dat(&self) -> &fix_model_core::prelude::dat {
+                self.0
+            }
+            #[inline]
+            pub fn into_inner(self) -> &'a fix_model_core::prelude::dat {
+                self.0
+            }
         }
         impl $NAME_DATA<fix_model_core::prelude::Data> {
             /// Ownwing inner Type<&str> -> Type<String> instead of &Type<&str> -> Type<&str>
             #[inline]
-            pub fn to_owned(&self) -> $NAME_DATA<fix_model_core::prelude::Data> {
+            pub fn to_owned_inner_if_ref(&self) -> $NAME_DATA<fix_model_core::prelude::Data> {
                 $NAME_DATA(self.0.to_owned())
             }
             /// Borrowing inner Type<&str> -> Type<&str> instead of Type<&str> -> &Type<&str>
             #[inline]
-            pub fn borrow(&self) -> $NAME_DATA<&fix_model_core::prelude::dat> {
+            pub fn borrow_inner_if_allocated(&self) -> $NAME_DATA<&fix_model_core::prelude::dat> {
                 $NAME_DATA(self.0.as_dat())
             }
             /// Borrowing inner &str as &str
             #[inline]
             pub fn value(&self) -> &fix_model_core::prelude::dat {
                 self.0.as_dat()
+            }
+            #[inline]
+            pub fn as_dat(&self) -> &fix_model_core::prelude::dat {
+                self.0.as_dat()
+            }
+            #[inline]
+            pub fn into_inner(self) -> fix_model_core::prelude::Data {
+                self.0
             }
         }
         impl<'a> $NAME_DATA<fix_model_core::prelude::dat_codec<'a>> {
@@ -378,6 +437,8 @@ macro_rules! fix_data {
                 $NAME_DATA(value.as_slice().into())
             }
         }
+        // Implemented via derive(Default) while expecting inner to panic so that it is only possiblt to initialize
+        // Option<$NAME<S>> instead of $NAME<S> directly
         // impl Default for $NAME_DATA<fix_model_core::prelude::Data> {
         //     #[inline]
         //     fn default() -> Self {

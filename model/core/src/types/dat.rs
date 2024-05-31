@@ -27,6 +27,12 @@ impl<'a> From<&'a [u8]> for &'a dat {
         dat::from_slice(value)
     }
 }
+impl AsRef<dat> for &dat {
+    #[inline]
+    fn as_ref(&self) -> &dat {
+        self
+    }
+}
 impl ToOwned for dat {
     type Owned = Data;
     #[inline]

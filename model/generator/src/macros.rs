@@ -1,4 +1,4 @@
-/// Will return a [PathBuf] path to a file located in the `resources` directory of the currently built crate.
+/// Will return a [std::path::PathBuf] path to a file located in the `resources` directory of the currently built crate.
 #[macro_export]
 macro_rules! resource {
     ($fname:expr) => {{

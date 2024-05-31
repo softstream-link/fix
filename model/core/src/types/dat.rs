@@ -62,7 +62,8 @@ impl Debug for &dat {
 }
 impl Default for &dat {
     /// Panics but exists to allow auto generated Default for structs that contain ['MyStruct::<&dat>'] to use the following syntax
-    /// ```no_run
+    /// ```
+    /// let dat = fix_model_core::prelude::dat::from_slice(b"hello");
     /// /*
     /// let l = Logon::<&str, &dat> {
     ///     ..Default::default()

@@ -78,7 +78,7 @@ impl<'de, 'any, R: Read<'de> + 'any, X: Schema> de::MapAccess<'de> for GreedyMap
 #[cfg(debug_assertions)]
 const NAME_LAZY_MAPACCESS: &str = "LazyMapAccess";
 /// Map access is initialized with a list of fields/fix tags that are expected to be deserialized.
-/// [`LazyMapAccess::next_key_seed`] will stop yielding keys as soon at it encounters a tag that is not in the list of expected tags.
+/// `LazyMapAccess::next_key_seed` will stop yielding keys as soon at it encounters a tag that is not in the list of expected tags.
 /// Typically reserved for deserializing parts fo the FIX Header because fields are fixed and known.
 pub struct LazyMapAccess<'a, R, S> {
     deserializer: &'a mut Deserializer<R, S>,
@@ -258,8 +258,8 @@ impl<'de, 'a, R: Read<'de>, X: Schema> de::Deserializer<'de> for &'a mut Deseria
         // );
         visitor.visit_bytes(peeked_tag)
     }
-    /// Will forward to [Self::deserialize_seq] if the peeked tag is a repeating group.
-    /// Will forward to [Self::deserialize_bytes] if the peeked tag is a Len/Data binary section.
+    /// * Will forward to `Self::deserialize_seq` if the peeked tag is a repeating group.
+    /// * Will forward to `Self::deserialize_bytes` if the peeked tag is a Len/Data binary section.
     fn deserialize_seq<V: de::Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
         #[cfg(debug_assertions)]
         {

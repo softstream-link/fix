@@ -82,8 +82,9 @@ impl Debug for dat_codec<'_> {
     }
 }
 impl Default for dat_codec<'_> {
-    /// Panics but exists to allow auto generated Default for structs that contain [`MyStruct::<dat_codec>`] to use the following syntax
+    /// Panics but exists to allow auto generated Default for structs that contain [Self] as a member
     /// ```no_run
+    /// let dat = fix_model_core::prelude::dat_codec::from_slice(b"hello");
     /// /*
     /// let l = Logon::<&str, dat_codec> {
     ///     ..Default::default()

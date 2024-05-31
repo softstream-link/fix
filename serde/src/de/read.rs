@@ -26,11 +26,11 @@ pub trait Read<'origin>: private::Sealed + Display {
 
     /// * Assumes [Self] is positioned to read right after the last `=` sign.
     /// * Will return the value of the specified length
-    /// * Returns [Error::EnexpectedEof] specified length exceeds available bytes or if byte follwoing length size is not `SOH`
+    /// * Returns [`Err(Error::EnexpectedEof)`] specified length exceeds available bytes or if byte follwoing length size is not `SOH`
     fn parse_value_with_length(&mut self, length: usize) -> Result<&'origin [u8]>;
 
     /// * Assumes [Self] is positioned tor read right after the last `=` sign.
-    /// * Will return the value upto but not including the SOH byte. However the value will be parsed as a number of type [T].
+    /// * Will return the value upto but not including the SOH byte. However the value will be parsed as a number of type `T`.
     /// * Will position [Self] immediatly after SOH byte but not return it.
     fn parse_value_as_number<T>(&mut self) -> Result<T>
     where
@@ -45,12 +45,12 @@ pub trait Read<'origin>: private::Sealed + Display {
     // /// returns [None] if the value was not found and Eof reached
     // fn seek_eqs(&mut self) -> Result<Option<()>>;
     /// # Returns
-    /// * [`Ok(Some(&\[u8\]))`] containing the next tag value `WITHOUT` consuming it, call [parse_tag] to consume it.
+    /// * [`Ok(Some(&\[u8\]))`] containing the next tag value `WITHOUT` consuming it, call [`Self::parse_tag`] to consume it.
     /// * [`Ok(None)`] indicating Eof
     fn peek_tag(&mut self) -> Result<Option<&'origin [u8]>>;
     /// # Returns
     /// * [`Ok(&\[u8\])`] containing the next tag value in bytes form `WHILE` consuming it and also consuming one extra byte with `=` that follows the tag
-    /// * [`Error::EnexpectedEof`] if the tag value is not found
+    /// * [`Err(Error::EnexpectedEof)`] if the tag value is not found
     fn parse_tag(&mut self) -> Result<Option<&'origin [u8]>>;
 
     fn last_peeked_tag(&self) -> Option<&'origin [u8]>;

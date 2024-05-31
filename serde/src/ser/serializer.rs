@@ -294,7 +294,7 @@ impl<W: Write, X: Schema> ser::SerializeSeq for &mut Serializer<W, X> {
     /// SerializeSeq::serialize_element: is exclusively reserved for serializing repeating group & binary data tag pair.
     /// struct Msg {
     ///     #[serde(rename="384")]
-    ///     repeating_group: Vec<RepeatingGroup>,
+    ///     repeating_group: `Vec<RepeatingGroup>`,
     ///     #[serde(rename="95")]
     ///     data: Data,
     /// }

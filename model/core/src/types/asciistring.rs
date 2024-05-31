@@ -29,7 +29,7 @@ impl Ascii {
 }
 impl TryFrom<Vec<u8>> for Ascii {
     type Error = Error;
-    /// The call `WILL NOT` allocate, but consumes input [Vec<u8>]
+    /// The call `WILL NOT` allocate, but consumes input [`Vec<u8>`]
     ///
     /// Returns [Result]:
     /// * [`Ok(Ascii)`] if input is valid ascii.

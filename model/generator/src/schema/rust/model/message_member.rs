@@ -31,19 +31,17 @@ impl IsGenericMember for RMessageMember {
     }
 }
 impl RMessageMember {
-    /// Returns somethinkg like this for string types
-    /// ```
-    /// /*
-    /// struct MyStruct<S>
-    /// where
-    ///  Blah<S>: Default, // <-- this line
-    ///  Blah1<S>: Default, // <-- this line
-    /// {
-    ///     blah: Blah<S>,
-    ///     blah1: Option<Blah1<S>>,
-    /// }
-    /// */
-    /// ```
+    // Returns somethinkg like this for string types
+    // ```
+    // struct MyStruct<S>
+    // where
+    //  Blah<S>: Default, // <-- this line
+    //  Blah1<S>: Default, // <-- this line
+    // {
+    //     blah: Blah<S>,
+    //     blah1: Option<Blah1<S>>,
+    // }
+    // ```
     pub fn default_trait_bounds(&self, rf_model: &RFModel) -> TokenStream {
         match &self.member {
             RFldDef::Plain(plain) => match plain.new_type {

@@ -24,8 +24,9 @@ impl Data {
     }
 }
 impl Default for Data {
-    /// Panics but exists to allow auto generated Default for structs that contain [`MyStruct::<Data>`] to use the following syntax
-    /// ```no_run
+    /// Panics but exists to allow auto generated Default for structs that contain [Self] as a member
+    /// ```
+    /// let dat = fix_model_core::prelude::Data::from_slice(b"hello");
     /// /*
     /// let l = Logon::<&str, Data> {
     ///     ..Default::default()

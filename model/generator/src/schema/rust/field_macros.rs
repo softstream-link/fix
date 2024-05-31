@@ -127,18 +127,11 @@ macro_rules! fix_string {
                 Self::new(value)
             }
         }
-        impl TryFrom<&str> for $NAME<fix_model_core::prelude::Ascii> {
+        impl TryFrom<String> for $NAME<fix_model_core::prelude::Ascii> {
             type Error = fix_model_core::prelude::Error;
             #[inline]
-            fn try_from(value: &str) -> fix_model_core::prelude::Result<Self> {
-                fix_model_core::prelude::Ascii::try_from(value).map(Self::new)
-            }
-        }
-        impl<const N: usize> TryFrom<&[u8; N]> for $NAME<fix_model_core::prelude::Ascii> {
-            type Error = fix_model_core::prelude::Error;
-            #[inline]
-            fn try_from(value: &[u8; N]) -> fix_model_core::prelude::Result<Self> {
-                fix_model_core::prelude::Ascii::try_from(value.as_slice()).map(Self::new)
+            fn try_from(value: String) -> fix_model_core::prelude::Result<Self> {
+                Ok(Self::new(fix_model_core::prelude::Ascii::try_from(value)?))
             }
         }
         impl TryFrom<&str> for $NAME<&fix_model_core::prelude::asc> {
@@ -430,9 +423,6 @@ pub use fix_data;
 
 #[macro_export]
 macro_rules! _fix_numeric_fixed_length {
-    // ($NAME:ident, $TAG:literal, $TY:tt, $LEN:literal) => {
-    //     $crate::_fix_numeric_fixed_length!($NAME, $TAG, pub, $TY, $LEN);
-    // };
     ($NAME:ident, $TAG:literal, $VIS:vis, $TY:tt, $LEN:literal) => {
         #[derive(serde::Deserialize, PartialEq, Clone, Default)]
         $VIS struct $NAME($TY);
@@ -541,7 +531,7 @@ macro_rules! fix_float64 {
     };
     ($NAME:ident, $TAG:literal, $VIS:vis) => {
         $crate::_fix_numeric!($NAME, $TAG, $VIS, f64);
-    }
+    };
 }
 pub use fix_float64;
 #[macro_export]
@@ -551,7 +541,7 @@ macro_rules! fix_float32 {
     };
     ($NAME:ident, $TAG:literal, $VIS:vis) => {
         $crate::_fix_numeric!($NAME, $TAG, $VIS, f32);
-    }
+    };
 }
 pub use fix_float32;
 

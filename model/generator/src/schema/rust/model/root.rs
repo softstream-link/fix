@@ -124,24 +124,7 @@ impl RFModel {
             #index
         })
     }
-    pub fn helpers_to_code(&self) -> String {
-        let schema_name = format_ident!("{}Schema", self.name);
-        let methods = quote!(
-            pub fn from_fix<'de, T: serde::Deserialize<'de>>(slice: &'de [u8]) -> fix_serde::prelude::Result<T> {
-                fix_serde::prelude::from_slice_with_schema::<_, #schema_name>(slice)
-            }
-            pub fn to_fix<T: serde::Serialize>(value: &T, capacity: Option<usize>) -> fix_serde::prelude::Result<fix_serde::prelude::Serializer<fix_serde::prelude::BytesWrite, #schema_name>> {
-                fix_serde::prelude::to_bytes_with_schema::<_,#schema_name>(value, capacity)
-            }
 
-            pub type FrameEnchoder = fix_serde::prelude::FrameEnchoder<#schema_name >;
-            pub type FrameDecoder<'de> = fix_serde::prelude::FrameDecoder<'de, #schema_name >;
-
-        );
-        format_token_stream(&quote! {
-            #methods
-        })
-    }
     pub fn errors(&self) -> Vec<Error> {
         let mut errors = vec![];
         errors.extend(self.errors.clone());
@@ -151,36 +134,6 @@ impl RFModel {
     }
 
     fn schema_def(&self) -> SchemaDef {
-        // let app_msgs = self
-        //     .msg_defs
-        //     .iter()
-        //     .filter_map(|msg_def| {
-        //         if matches!(msg_def.msg_category, MessageCategory::App) {
-        //             Some(msg_def)
-        //             // let name = format_ident!("{}", msg_def.name.as_str());
-        //             // let generic_names = msg_def.generics(self).generic_names;
-        //             // Some(quote! (#name(#name #generic_names),))
-        //         } else {
-        //             None
-        //         }
-        //     })
-        //     .collect::<Vec<_>>();
-
-        // let adm_msgs = self
-        //     .msg_defs
-        //     .iter()
-        //     .filter_map(|msg_def| {
-        //         if matches!(msg_def.msg_category, MessageCategory::Admin) {
-        //             Some(msg_def)
-        //             // let name = format_ident!("{}", msg_def.name.as_str());
-        //             // let generic_names = msg_def.generics(self).generic_names;
-        //             // Some(quote! (#name(#name #generic_names),))
-        //         } else {
-        //             None
-        //         }
-        //     })
-        //     .collect::<Vec<_>>();
-
         let tags = self
             .fld_defs
             .iter()

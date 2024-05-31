@@ -154,9 +154,4 @@ fn test_root_44_msgs() {
     let out_path = Path::new(out_dir).join("schema_v44.rs");
     info!("out_path: {:?}", out_path);
     fs::write(&out_path, index_code).unwrap();
-
-    let index_code = rf.helpers_to_code();
-    let out_path = Path::new(out_dir).join("helpers_v44.rs");
-    info!("out_path: {:?}", out_path);
-    fs::write(&out_path, index_code).unwrap();
 }

@@ -23,28 +23,13 @@ impl Ascii {
         fix_str.as_str()
     }
 
-    #[inline]
-    pub fn try_from_str(value: &str) -> Result<Self> {
-        Ascii::try_from(value)
-    }
+    // #[inline]
+    // pub fn try_from_str(value: &str) -> Result<Self> {
+    //     Ascii::try_from(value)
+    // }
     #[inline]
     pub fn as_asc(&self) -> &asc {
         self.deref()
-    }
-}
-impl TryFrom<&[u8]> for Ascii {
-    type Error = Error;
-    /// The call will allocate a new [Vec<u8>] and copy input slice into it.
-    ///
-    /// Returns [Result]:
-    /// * [`Ok(Ascii)`] if input is valid ascii.
-    /// * [`Err(Error)`] if input is not valid ascii.
-    #[inline]
-    fn try_from(value: &[u8]) -> Result<Self> {
-        if !value.is_ascii() {
-            return Err(Error::not_ascii_bytes(value.to_vec()));
-        }
-        Ok(Self(value.to_vec()))
     }
 }
 impl TryFrom<Vec<u8>> for Ascii {
@@ -62,36 +47,6 @@ impl TryFrom<Vec<u8>> for Ascii {
         // don't use try_from(val: &[u8]) which will allocate a new Vec
         // instead consume the Vec and use it directly
         Ok(Self(value))
-    }
-}
-impl TryFrom<&str> for Ascii {
-    type Error = Error;
-    /// The call will allocate a new [Vec<u8>] and copy input str into it.
-    ///
-    /// Returns [Result]:
-    /// * [`Ok(Ascii)`] if input is valid ascii.
-    /// * [`Err(Error)`] if input is not valid ascii.
-    #[inline]
-    fn try_from(value: &str) -> Result<Self> {
-        if !value.is_ascii() {
-            return Err(Error::not_ascii_string(value.to_string()));
-        }
-        Ok(Self(value.as_bytes().to_vec()))
-    }
-}
-impl<const N: usize> TryFrom<&[u8; N]> for Ascii {
-    type Error = Error;
-    /// The call will allocate a new [Vec<u8>] and copy input str into it.
-    ///
-    /// Returns [Result]:
-    /// * [`Ok(Ascii)`] if input is valid ascii.
-    /// * [`Err(Error)`] if input is not valid ascii.
-    #[inline]
-    fn try_from(value: &[u8; N]) -> Result<Self> {
-        if !value.is_ascii() {
-            return Err(Error::not_ascii_bytes(value.to_vec()));
-        }
-        Ok(Self(value.as_ref().to_vec()))
     }
 }
 impl TryFrom<String> for Ascii {
@@ -181,17 +136,9 @@ mod tests {
     #[test]
     fn test_fix_string() -> Result<()> {
         setup::log::configure();
-        let v1 = "ABC";
+        let v1 = "ABC".to_owned();
         let s1 = Ascii::try_from(v1)?;
-        info!("v1: {:?}", v1);
         info!("s1: {:?}", s1);
-
-        let v2 = b"ABC";
-        let s2 = Ascii::try_from(v2)?;
-        info!("v2: {:?}", v2);
-        info!("s2: {:?}", s2);
-
-        assert_eq!(s1, s2);
 
         let v3 = "ABC".to_owned();
         info!("v3: {:?}", v3);
@@ -212,7 +159,7 @@ mod tests {
     #[test]
     fn test_fix_string_not_ascii() -> Result<()> {
         setup::log::configure();
-        let utf8 = "Hello 💖 World";
+        let utf8 = "Hello 💖 World".to_owned();
 
         info!("utf8: {:?}", utf8);
 

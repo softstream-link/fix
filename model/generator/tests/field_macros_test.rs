@@ -74,9 +74,8 @@ fn test_fix_string_str_ascii_asc() {
     let _inp: Account<&asc> = b"ABC".try_into().unwrap();
     let _inp: Account<&asc> = Default::default();
 
-    let _inp = Account::new(Ascii::try_from_str("ABC").unwrap());
-    let _inp: Account<Ascii> = "ABC".try_into().unwrap();
-    let _inp: Account<Ascii> = b"ABC".try_into().unwrap();
+    let _inp = Account::new(Ascii::try_from("ABC".to_owned()).unwrap());
+    let _inp: Account<Ascii> = "ABC".to_owned().try_into().unwrap();
     let _inp: Account<Ascii> = Default::default();
     info!("Account<Ascii>::default '{}'", Account::<Ascii>::default());
 

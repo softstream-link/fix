@@ -1,9 +1,17 @@
 use core::str;
+use fix_model_test::unittest::setup;
+use log::info;
 
 use fix_model_core::prelude::*;
-use fix_model_test::unittest::setup;
 use fix_model_v44::*;
-use log::info;
+use fix_serde::prelude::*;
+
+pub fn from_fix<'de, T: serde::Deserialize<'de>>(slice: &'de [u8]) -> fix_serde::prelude::Result<T> {
+    from_slice_with_schema::<_, Fix44Schema>(slice)
+}
+pub fn to_fix<T: serde::Serialize>(value: &T, capacity: Option<usize>) -> fix_serde::prelude::Result<Serializer<BytesWrite, Fix44Schema>> {
+    fix_serde::prelude::to_bytes_with_schema::<_, Fix44Schema>(value, capacity)
+}
 
 #[test]
 fn test_tag_value_plain() {
@@ -14,12 +22,12 @@ fn test_tag_value_plain() {
     };
     info!("msg: {:?}", msg);
 
-    let fix = fix_model_v44::to_fix(&msg, None).unwrap();
+    let fix = to_fix(&msg, None).unwrap();
     info!("fix: {}", fix);
     let json = serde_json::to_string(&msg).unwrap();
     info!("json: {}", json);
 
-    let fix_out: TagValueAccount<String> = fix_model_v44::from_fix(&fix).unwrap();
+    let fix_out: TagValueAccount<String> = from_fix(&fix).unwrap();
     assert_eq!(msg, fix_out);
     let json_out: TagValueAccount<String> = serde_json::from_str(&json).unwrap();
     assert_eq!(msg, json_out);
@@ -34,12 +42,12 @@ fn test_tag_value_data() {
     };
     info!("msg: {:?}", msg);
 
-    let fix = fix_model_v44::to_fix(&msg, None).unwrap();
+    let fix = to_fix(&msg, None).unwrap();
     info!("fix: {}", fix);
     let json = serde_json::to_string(&msg).unwrap();
     info!("json: {}", json);
 
-    let fix_out: TagValueEncodedAllocText<dat_codec> = fix_model_v44::from_fix(&fix).unwrap();
+    let fix_out: TagValueEncodedAllocText<dat_codec> = from_fix(&fix).unwrap();
     assert_eq!(msg, fix_out);
     let mut json_out: TagValueEncodedAllocText<dat_codec> = serde_json::from_str(&json).unwrap();
     json_out.encoded_alloc_text.decode().unwrap();
@@ -56,12 +64,12 @@ fn test_rep_grp() {
     };
     info!("msg: {:?}", msg);
 
-    let fix = fix_model_v44::to_fix(&msg, None).unwrap();
+    let fix = to_fix(&msg, None).unwrap();
     info!("fix: {}", fix);
     let json = serde_json::to_string(&msg).unwrap();
     info!("json: {}", json);
 
-    let fix_out: AllocGrp<String, char, Data> = fix_model_v44::from_fix(&fix).unwrap();
+    let fix_out: AllocGrp<String, char, Data> = from_fix(&fix).unwrap();
     assert_eq!(msg, fix_out);
     let json_out: AllocGrp<String, char, Data> = serde_json::from_str(&json).unwrap();
     assert_eq!(msg, json_out);
@@ -81,12 +89,12 @@ fn test_generated_logon() {
 
     info!("msg: {:?}", msg);
 
-    let fix = fix_model_v44::to_fix(&msg, None).unwrap();
+    let fix = to_fix(&msg, None).unwrap();
     info!("fix: {}", fix);
     let json = serde_json::to_string(&msg).unwrap();
     info!("json: {}", json);
 
-    let fix_out: Logon<&str, dat_codec> = fix_model_v44::from_fix(&fix).unwrap();
+    let fix_out: Logon<&str, dat_codec> = from_fix(&fix).unwrap();
     assert_eq!(msg, fix_out);
     let mut json_out: Logon<&str, dat_codec> = serde_json::from_str(&json).unwrap();
     if let Some(raw_data) = &mut json_out.raw_data {
@@ -96,7 +104,7 @@ fn test_generated_logon() {
 
     let msg_app = MsgAdm::Logon(msg);
     info!("msg_app: {:?}", msg_app);
-    let fix_app = fix_model_v44::to_fix(&msg_app, None).unwrap();
+    let fix_app = to_fix(&msg_app, None).unwrap();
     info!("fix_app: {}", fix_app);
 
     let json_app: String = serde_json::to_string(&msg_app).unwrap();
@@ -118,12 +126,12 @@ fn test_new_order_single() {
     };
     info!("msg: {:?}", msg);
 
-    let fix = fix_model_v44::to_fix(&msg, None).unwrap();
+    let fix = to_fix(&msg, None).unwrap();
     info!("fix: {}", fix);
     let json = serde_json::to_string(&msg).unwrap();
     info!("json: {}", json);
 
-    let out_fix: NewOrderSingle<&str, char, dat_codec> = fix_model_v44::from_fix(&fix).unwrap();
+    let out_fix: NewOrderSingle<&str, char, dat_codec> = from_fix(&fix).unwrap();
     assert_eq!(out_fix, msg);
 
     let mut out_json_msg: NewOrderSingle<&str, char, dat_codec> = serde_json::from_str(&json).unwrap();

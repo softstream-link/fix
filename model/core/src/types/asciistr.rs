@@ -161,7 +161,7 @@ mod tests {
         setup::log::configure();
         let _inp: &asc = "ABC".try_into().unwrap();
 
-        let v = "ABC";
+        let v = "ABC".to_owned();
         info!("v: {:?}", v);
         let s_owned = Ascii::try_from(v)?;
         info!("s_owned: {:?}", s_owned);

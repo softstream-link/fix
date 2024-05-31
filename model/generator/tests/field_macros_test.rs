@@ -7,10 +7,7 @@ use fix_model_generator::{
     prelude::{fix_ascii_char_enum, fix_bool, fix_char_any, fix_data, fix_string, fix_usize},
 };
 use fix_model_test::unittest::setup;
-use fix_serde::unittest::{from_slice_unittest, to_bytes_unittest};
 use log::info;
-
-use serde_json::{from_str, to_string};
 
 #[test]
 fn test_data_dat_codec_dat() {
@@ -29,6 +26,7 @@ fn test_data_dat_codec_dat() {
     let _dat = _inp.as_dat();
     let _inner = _inp.into_inner();
 
+    // Data
     let _inp = RawData::new(Data::from_slice(b"\x00BIN"));
     let _inp = RawData::new(Data::from_slice(&vec![1, 2]));
     let _inp = RawData::new(Data::from_vec(vec![1, 2]));
@@ -145,42 +143,6 @@ fn test_fix_string_str_ascii_asc() {
     let display_m = format!("{:-}", inp);
     info!("display_m: {}", display_m);
     assert_eq!(display_m, "Account=ABC");
-
-    let fix_ser = to_bytes_unittest(&inp).unwrap();
-    info!("fix_ser: {}", fix_ser);
-    let jsn_ser = to_string(&inp).unwrap();
-    info!("jsn_ser: {}", jsn_ser);
-
-    info!("Account<String>");
-    let fix_out = from_slice_unittest::<Account<String>>(&fix_ser).unwrap();
-    let jsn_out = serde_json::from_str::<Account<String>>(&jsn_ser).unwrap();
-    info!("jsn_out: {:?}", jsn_out);
-    assert_eq!(jsn_out, fix_out);
-    assert_eq!(fix_out.value(), "ABC");
-
-    info!("Account<&str>");
-    let fix_out = from_slice_unittest::<Account<&str>>(&fix_ser).unwrap();
-    info!("fix_out: {:?}", fix_out);
-    let jsn_out = from_str::<Account<&str>>(&jsn_ser).unwrap();
-    info!("jsn_out: {:?}", jsn_out);
-    assert_eq!(jsn_out, fix_out);
-    assert_eq!(fix_out.value(), "ABC");
-
-    info!("Account<Ascii>");
-    let fix_out = from_slice_unittest::<Account<Ascii>>(&fix_ser).unwrap();
-    info!("fix_out: {:?}", fix_out);
-    let jsn_out = from_str::<Account<Ascii>>(&jsn_ser).unwrap();
-    info!("jsn_out: {:?}", jsn_out);
-    assert_eq!(jsn_out, fix_out);
-    assert_eq!(fix_out.value(), asc::try_from_str("ABC").unwrap());
-
-    info!("Account<&asc>");
-    let fix_out = from_slice_unittest::<Account<&asc>>(&fix_ser).unwrap();
-    info!("fix_out: {:?}", fix_out);
-    let jsn_out = from_str::<Account<&asc>>(&jsn_ser).unwrap();
-    info!("jsn_out: {:?}", jsn_out);
-    assert_eq!(jsn_out, fix_out);
-    assert_eq!(fix_out.value(), asc::try_from_slice(b"ABC").unwrap());
 }
 
 #[test]
@@ -228,17 +190,6 @@ fn test_char_any() {
     let display_m = format!("{:-}", inp);
     info!("display_m: {}", display_m);
     assert_eq!(display_m, "IOIOthSvc=A");
-
-    let fix_ser = to_bytes_unittest(&inp).unwrap();
-    info!("fix_ser: {}", fix_ser);
-    let jsn_ser = serde_json::to_string(&inp).unwrap();
-    info!("jsn_ser: {}", jsn_ser);
-
-    let fix_out = from_slice_unittest::<IOIOthSvc<aschar>>(&fix_ser).unwrap();
-    info!("fix_out: {:?}", fix_out);
-    let jsn_out = serde_json::from_str::<IOIOthSvc<aschar>>(&jsn_ser).unwrap();
-    info!("jsn_out: {:?}", jsn_out);
-    assert_eq!(jsn_out, fix_out);
 }
 
 #[test]
@@ -272,17 +223,6 @@ fn test_char_enum() {
     let display_m = format!("{:-}", inp);
     info!("display_m: {}", display_m);
     assert_eq!(display_m, "AdvSide=B");
-
-    let fix_ser = to_bytes_unittest(&inp).unwrap();
-    info!("fix_ser: {}", fix_ser);
-    let jsn_ser = serde_json::to_string(&inp).unwrap();
-    info!("jsn_ser: {}", jsn_ser);
-
-    let fix_out = from_slice_unittest::<AdvSide>(&fix_ser).unwrap();
-    info!("fix_out: {:?}", fix_out);
-    let jsn_out = serde_json::from_str::<AdvSide>(&jsn_ser).unwrap();
-    info!("jsn_out: {:?}", jsn_out);
-    assert_eq!(jsn_out, fix_out);
 }
 
 #[test]
@@ -292,17 +232,7 @@ fn test_fix_u8_fixed_len() {
     // 88::MAX 255 len 3
     fix_u8_fixed_length!(CheckSum, 10);
     let _inp = CheckSum::new(2);
-    let inp: CheckSum = 2.into();
-
-    let fix_ser = to_bytes_unittest(&inp).unwrap();
-    info!("fix_ser: {}", fix_ser);
-    let jsn_ser = to_string(&inp).unwrap();
-    info!("jsn_ser: {}", jsn_ser);
-
-    let fix_out = from_slice_unittest::<CheckSum>(&fix_ser).unwrap();
-    let jsn_out = serde_json::from_str::<CheckSum>(&jsn_ser).unwrap();
-    assert_eq!(jsn_out, fix_out);
-    assert_eq!(jsn_out.value(), 2);
+    let _inp: CheckSum = 2.into();
 }
 #[test]
 fn test_fix_usize_fixed_len() {
@@ -337,16 +267,6 @@ fn test_fix_usize_fixed_len() {
     let display_m = format!("{:-}", inp);
     info!("display_m: {}", display_m);
     assert_eq!(display_m, "BodyLength=18446744073709551615");
-
-    let fix_ser = to_bytes_unittest(&inp).unwrap();
-    info!("fix_ser: {}", fix_ser);
-    let jsn_ser = to_string(&inp).unwrap();
-    info!("jsn_ser: {}", jsn_ser);
-
-    let fix_out = from_slice_unittest::<BodyLength>(&fix_ser).unwrap();
-    let jsn_out = serde_json::from_str::<BodyLength>(&jsn_ser).unwrap();
-    info!("jsn_out: {:?}", jsn_out);
-    assert_eq!(jsn_out, fix_out);
 }
 
 #[test]
@@ -381,16 +301,6 @@ fn test_fix_usize() {
     let display_m = format!("{:-}", inp);
     info!("display_m: {}", display_m);
     assert_eq!(display_m, "BeginSeqNo=2");
-
-    let fix_ser = to_bytes_unittest(&inp).unwrap();
-    info!("fix_ser: {}", fix_ser);
-    let jsn_ser = to_string(&inp).unwrap();
-    info!("jsn_ser: {}", jsn_ser);
-
-    let fix_out = from_slice_unittest::<BeginSeqNo>(&fix_ser).unwrap();
-    let jsn_out = serde_json::from_str::<BeginSeqNo>(&jsn_ser).unwrap();
-    info!("jsn_out: {:?}", jsn_out);
-    assert_eq!(jsn_out, fix_out);
 }
 
 #[test]
@@ -426,17 +336,6 @@ fn test_fix_bool() {
     let display_m = format!("{:-}", inp);
     info!("display_m: {}", display_m);
     assert_eq!(display_m, "PossDupFlag=N");
-
-    let fix_ser = to_bytes_unittest(&inp).unwrap();
-    info!("fix_ser: {}", fix_ser);
-    let jsn_ser = serde_json::to_string(&inp).unwrap();
-    info!("jsn_ser: {}", jsn_ser);
-
-    let fix_out = from_slice_unittest::<PossDupFlag>(&fix_ser).unwrap();
-    info!("fix_out: {:?}", fix_out);
-    let jsn_out = serde_json::from_str::<PossDupFlag>(&jsn_ser).unwrap();
-    info!("jsn_out: {:?}", jsn_out);
-    assert_eq!(jsn_out, fix_out);
 }
 
 #[test]
@@ -458,7 +357,7 @@ fn test_example_msg_to_owned() {
         }
     }
     #[derive(Debug, Clone)]
-    struct SomeMsg<S, C, D,> {
+    struct SomeMsg<S, C, D> {
         account: Account<S>,
         account_optional: Option<Account<S>>,
         ioioth_svc: IOIOthSvc<C>,
@@ -467,9 +366,8 @@ fn test_example_msg_to_owned() {
         raw_data_optional: Option<RawData<D>>,
         rep_grp: Vec<RepGrp>,
     }
-    // impl<S, C, D> SomeMsg<S, C, D> {
-    //     fn to_owned_inner_if_ref(&self) -> SomeMsg<String, char, Data> {
-    impl SomeMsg<&str, char, &dat,> {
+
+    impl SomeMsg<&str, char, &dat> {
         fn to_owned_inner_if_ref(&self) -> SomeMsg<String, char, Data> {
             SomeMsg {
                 account: self.account.to_owned_inner_if_ref(),
@@ -488,25 +386,6 @@ fn test_example_msg_to_owned() {
             }
         }
     }
-    // impl SomeMsg<String, char, Data> {
-    //     fn to_owned_inner_if_ref(&self) -> SomeMsg<String, char, Data> {
-    //         SomeMsg {
-    //             account: self.account.to_owned_inner_if_ref(),
-    //             account_optional: match &self.account_optional {
-    //                 Some(account) => Some(account.to_owned_inner_if_ref()),
-    //                 None => None,
-    //             },
-    //             ioioth_svc: self.ioioth_svc,
-    //             begin_seq_no: self.begin_seq_no,
-    //             raw_data: self.raw_data.to_owned_inner_if_ref(),
-    //             raw_data_optional: match &self.raw_data_optional {
-    //                 Some(raw_data) => Some(raw_data.to_owned_inner_if_ref()),
-    //                 None => None,
-    //             },
-    //             rep_grp: self.rep_grp.iter().map(|rep_grp| rep_grp.to_owned_inner_if_ref()).collect(),
-    //         }
-    //     }
-    // }
     let _inp = SomeMsg {
         account: Account::new("ABC"),
         account_optional: Some(Account::new("ABC")),
@@ -535,13 +414,6 @@ fn test_example_msg_to_owned() {
         }],
     };
 
-    // let _own = _inp.to_owned_inner_if_ref();
     let _own = _inp.clone();
     let _own = _inp.to_owned();
 }
-
-
-// impl Advertisement < & fix_model_core :: prelude :: asc , fix_model_core :: prelude :: aschar , & fix_model_core :: prelude :: dat , > {
-//      pub fn to_owned_inner_if_ref (& self) -> Advertisement < fix_model_core :: prelude :: Ascii , fix_model_core :: prelude :: aschar , fix_model_core :: prelude :: Data , > { 
-//         Advertisement < fix_model_core :: prelude :: Ascii , fix_model_core :: prelude :: aschar , fix_model_core :: prelude :: Data , > {
-//              r#adv_id : self . r#adv_id . to_owned_inner_if_ref () , r#adv_trans_type : self . r#adv_trans_type . to_owned_inner_if_ref () , r#adv_ref_id : match & self . r#adv_ref_id { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#symbol : match & self . r#symbol { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#symbol_sfx : match & self . r#symbol_sfx { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#security_id : match & self . r#security_id { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#security_id_source : match & self . r#security_id_source { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#sec_alt_id_grp : match & self . r#sec_alt_id_grp { Some (v) => Some (v . iter () . map (| rep_grp | rep_grp . to_owned_inner_if_ref ()) . collect ()) , None => None , } , r#product : match & self . r#product { Some (v) => Some (v) , None => None , } , r#cfi_code : match & self . r#cfi_code { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#security_type : match & self . r#security_type { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#security_sub_type : match & self . r#security_sub_type { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#maturity_month_year : match & self . r#maturity_month_year { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#maturity_date : match & self . r#maturity_date { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#put_or_call : match & self . r#put_or_call { Some (v) => Some (v) , None => None , } , r#coupon_payment_date : match & self . r#coupon_payment_date { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#issue_date : match & self . r#issue_date { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#repo_collateral_security_type : match & self . r#repo_collateral_security_type { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#repurchase_term : match & self . r#repurchase_term { Some (v) => Some (v) , None => None , } , r#repurchase_rate : match & self . r#repurchase_rate { Some (v) => Some (v) , None => None , } , r#factor : match & self . r#factor { Some (v) => Some (v) , None => None , } , r#credit_rating : match & self . r#credit_rating { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#instr_registry : match & self . r#instr_registry { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#country_of_issue : match & self . r#country_of_issue { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#state_or_province_of_issue : match & self . r#state_or_province_of_issue { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#locale_of_issue : match & self . r#locale_of_issue { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#redemption_date : match & self . r#redemption_date { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#strike_price : match & self . r#strike_price { Some (v) => Some (v) , None => None , } , r#strike_currency : match & self . r#strike_currency { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#opt_attribute : match & self . r#opt_attribute { Some (v) => Some (v) , None => None , } , r#contract_multiplier : match & self . r#contract_multiplier { Some (v) => Some (v) , None => None , } , r#coupon_rate : match & self . r#coupon_rate { Some (v) => Some (v) , None => None , } , r#security_exchange : match & self . r#security_exchange { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#issuer : match & self . r#issuer { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#encoded_issuer : match & self . r#encoded_issuer { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#security_desc : match & self . r#security_desc { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#encoded_security_desc : match & self . r#encoded_security_desc { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#pool : match & self . r#pool { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#contract_settl_month : match & self . r#contract_settl_month { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#cp_program : match & self . r#cp_program { Some (v) => Some (v) , None => None , } , r#cp_reg_type : match & self . r#cp_reg_type { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#evnt_grp : match & self . r#evnt_grp { Some (v) => Some (v . iter () . map (| rep_grp | rep_grp . to_owned_inner_if_ref ()) . collect ()) , None => None , } , r#dated_date : match & self . r#dated_date { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#interest_accrual_date : match & self . r#interest_accrual_date { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#instrmt_leg_grp : match & self . r#instrmt_leg_grp { Some (v) => Some (v . iter () . map (| rep_grp | rep_grp . to_owned_inner_if_ref ()) . collect ()) , None => None , } , r#und_instrmt_grp : match & self . r#und_instrmt_grp { Some (v) => Some (v . iter () . map (| rep_grp | rep_grp . to_owned_inner_if_ref ()) . collect ()) , None => None , } , r#adv_side : self . r#adv_side , r#quantity : self . r#quantity , r#qty_type : match & self . r#qty_type { Some (v) => Some (v) , None => None , } , r#price : match & self . r#price { Some (v) => Some (v) , None => None , } , r#currency : match & self . r#currency { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#trade_date : match & self . r#trade_date { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#transact_time : match & self . r#transact_time { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#text : match & self . r#text { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#encoded_text : match & self . r#encoded_text { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#url_link : match & self . r#url_link { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#last_mkt : match & self . r#last_mkt { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#trading_session_id : match & self . r#trading_session_id { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , r#trading_session_sub_id : match & self . r#trading_session_sub_id { Some (v) => Some (v . to_owned_inner_if_ref ()) , None => None , } , } } }

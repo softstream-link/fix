@@ -5,14 +5,16 @@ use std::{
     ops::Deref,
 };
 
+use super::data::Data;
+
 #[derive(Debug)]
-enum MaybeAllocated<'a> {
+pub enum MaybeAllocated<'a> {
     Allocated(Vec<u8>),
     Borrowed { slice: &'a [u8], base64: bool },
 }
 #[repr(transparent)]
 #[allow(non_camel_case_types)]
-// #[derive()] // TODO add decoder type to generic with default base64
+// #[derive()] // TODO add decoder type so that different types if enchodings are possible to generic with default base64
 pub struct dat_codec<'a>(MaybeAllocated<'a>);
 impl<'a> dat_codec<'a> {
     #[inline]
@@ -21,7 +23,7 @@ impl<'a> dat_codec<'a> {
     }
     pub fn decode(&mut self) -> Result<(), Error> {
         match &self.0 {
-            MaybeAllocated::Borrowed { slice, base64 } if *base64  => {
+            MaybeAllocated::Borrowed { slice, base64 } if *base64 => {
                 let v = slice.decode_base64().map_err(|e| Error::NotBase64String(e.to_string()))?;
                 self.0 = MaybeAllocated::Allocated(v);
                 Ok(())
@@ -34,6 +36,15 @@ impl<'a> dat_codec<'a> {
         let ptr = self.as_slice() as *const [u8] as *const dat;
         unsafe { &*ptr }
     }
+
+    #[inline]
+    pub fn to_owned(&self) -> Data {
+        match &self.0 {
+            MaybeAllocated::Allocated(v) => Data(v.clone()),
+            MaybeAllocated::Borrowed { slice, .. } => Data(slice.to_vec()),
+        }
+    }
+    
 
     #[inline]
     fn as_slice(&self) -> &[u8] {

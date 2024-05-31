@@ -1,6 +1,6 @@
 use fix_model_core::{
     prelude::{asc, Ascii},
-    types::{asciichar::aschar, dat::dat, data::Data},
+    types::{asciichar::aschar, dat::dat, dat_codec::dat_codec, data::Data},
 };
 use fix_model_generator::{
     fix_u8_fixed_length, fix_usize_fixed_length,
@@ -37,6 +37,12 @@ fn test_data_dat_codec_dat() {
     let _own = _inp.to_owned();
     let _borrow = _inp.borrow_inner_if_allocated();
     let _ref = _inp.as_ref();
+    let _dat = _inp.as_dat();
+    let _inner = _inp.into_inner();
+
+    let _inp =  RawData::new(dat_codec::from_slice(b"\x00BIN"));
+    let _own = _inp.to_owned_inner_if_ref();
+    let _borrow = _inp.borrow_inner_if_allocated();
     let _dat = _inp.as_dat();
     let _inner = _inp.into_inner();
 

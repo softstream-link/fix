@@ -38,10 +38,10 @@ ryu = { version = "1.0" }          # fast writes of floats to buffer
 convert_case = { version = "0.6" }
 base64 = { version = "0.22" }
 
-fix_model_generator = { path = "model/generator" }
-fix_model_test = { path = "model/test" }
-fix_model_core = { path = "model/core" }
-fix_serde = { path = "serde" }
+fix_model_generator = { version = "0.1.0", path = "model/generator" }
+fix_model_test = { version = "0.1.0", path = "model/test" }
+fix_model_core = { version = "0.1.0", path = "model/core" }
+fix_serde = { version = "0.1.0", path = "serde" }
 
 # logging
 log = { version = "0.4" }
